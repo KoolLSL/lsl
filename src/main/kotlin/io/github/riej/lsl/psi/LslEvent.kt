@@ -34,9 +34,12 @@ class LslEvent(node: ASTNode) : ASTWrapperLslNamedElement(node), NavigatablePsiE
     override fun getNavigationElement(): PsiElement =
         this.identifyingElement ?: this
 
-    override fun getPresentableText(): String = "$name(${
-        arguments.joinToString(", ") { "${it.lslType} ${it.name}" }
-    })".trim()
+    override fun getPresentableText(): String {
+        val identifierName = name.takeUnless { it.isNullOrBlank() } ?: identifyingElement?.text?.takeUnless { it.isBlank() } ?: "(anonymous)"
+        val args = arguments.joinToString(", ") { "${it.lslType} ${it.name ?: "(anonymous)"}" }
+        val text = "$identifierName($args)".trim()
+        return text.ifBlank { "(anonymous)" }
+    }
 
     override fun getIcon(unused: Boolean): Icon = LslIcons.EVENT
 

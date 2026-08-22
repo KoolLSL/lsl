@@ -73,11 +73,12 @@ object LslTypes {
     val WHITESPACE = LslTokenType("Whitespace")
     val NEWLINE = LslTokenType("Newline")
     val BLOCK_COMMENT = LslTokenType("BlockComment")
+    val PREPROCESSOR_DIRECTIVE = LslTokenType("PREPROCESSOR_DIRECTIVE")
     val LINE_COMMENT = LslTokenType("LineComment")
     val UNCLOSED_STRING_CONSTANT = LslTokenType("UnclosedStringConstant")
 
     val WHITESPACES = TokenSet.create(WHITESPACE, NEWLINE)
-    val COMMENTS = TokenSet.create(LINE_COMMENT, BLOCK_COMMENT)
+    val COMMENTS = TokenSet.create(LINE_COMMENT, BLOCK_COMMENT, PREPROCESSOR_DIRECTIVE)
     val STRINGS = TokenSet.create(STRING_CONSTANT, UNCLOSED_STRING_CONSTANT)
     val NUMBERS = TokenSet.create(INTEGER_CONSTANT, FLOATING_CONSTANT)
     val KEYWORDS = TokenSet.create(
@@ -256,8 +257,9 @@ object LslTypes {
             54 -> WHITESPACE
             55 -> NEWLINE
             56 -> BLOCK_COMMENT
-            57 -> LINE_COMMENT
-            58 -> UNCLOSED_STRING_CONSTANT
+            57 -> PREPROCESSOR_DIRECTIVE
+            58 -> LINE_COMMENT
+            59 -> UNCLOSED_STRING_CONSTANT
             else -> null
         }
 

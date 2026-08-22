@@ -26,6 +26,7 @@ import static com.intellij.psi.TokenType.BAD_CHARACTER;
 NEW_LINE = [\n\r]+
 WHITE_SPACE = [\ \t\f]
 
+PREPROCESSOR_DIRECTIVE = "//#" [^\r\n]*
 LINE_COMMENT = "//" [^\r\n]*
 MULTILINE_COMMENT = "/*" ( ([^"*"]|[\r\n])* ("*"+ [^"*""/"] )? )* ("*" | "*"+"/")?
 
@@ -54,6 +55,7 @@ ESCAPES = [nt]
     {WHITE_SPACE}+ { return WHITE_SPACE; }
     {NEW_LINE}+ { return WHITE_SPACE; }
 
+    {PREPROCESSOR_DIRECTIVE} { return PREPROCESSOR_DIRECTIVE; }
     {LINE_COMMENT} { return LINE_COMMENT; }
     {MULTILINE_COMMENT} { return MULTILINE_COMMENT; }
 

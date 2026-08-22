@@ -54,7 +54,7 @@ class LslParserAdapter : PsiParser {
             msg: String?,
             e: RecognitionException?
         ) {
-            if (e != null && msg != null) {
+            if (e != null && e.ctx != null && msg != null) {
                 errors[e.ctx] = "Syntax error: $msg"
             }
         }

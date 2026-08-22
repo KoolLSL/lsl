@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import io.github.riej.lsl.LslLanguage
+import io.github.riej.lsl.preprocessor.LslPreprocessorEngine
 import io.github.riej.lsl.psi.LslNamedElement
 import io.github.riej.lsl.references.LslReferenceUtils
 
@@ -19,12 +20,12 @@ class LslRedeclaredIdentifierInspection : LocalInspectionTool() {
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
 
         PsiTreeUtil.collectElementsOfType(file, LslNamedElement::class.java)
-            .filter { !it.textRange.isEmpty }
+            .filter { !it.textRange.isEmpty && !LslPreprocessorEngine.isElementDisabled(it) }
             .forEach {
                 val name = it.name ?: return@forEach
                 val existingIdentifier = LslReferenceUtils.findNamedElement(it, name) ?: return@forEach
 
-                if (existingIdentifier == it) {
+                if (existingIdentifier == it || LslPreprocessorEngine.isElementDisabled(existingIdentifier)) {
                     return@forEach
                 }
 

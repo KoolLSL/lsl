@@ -64,6 +64,8 @@ open class LslBlock(
 
     protected open fun makeChildBlock(child: ASTNode, specialChildAlignment: Alignment?): LslBlock {
         val childIndent = when {
+            child.elementType == LslTypes.PREPROCESSOR_DIRECTIVE -> Indent.getAbsoluteNoneIndent()
+
             child.psi is LeafPsiElement && child.psi !is PsiComment -> Indent.getNoneIndent()
 
             listOf(

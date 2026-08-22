@@ -8,12 +8,38 @@ import io.github.riej.lsl.parser.LslTypes
 
 class LslFormattingModelBuilder : FormattingModelBuilder {
     val identifierSet = TokenSet.create(LslTypes.IDENTIFIER)
+    val parenthesesRightSet = TokenSet.create(LslTypes.PARENTHESES_RIGHT)
+    val returnSet = TokenSet.create(LslTypes.RETURN)
+    val statementsWithoutBlock = TokenSet.create(
+        LslTypes.STATEMENT_EMPTY,
+        LslTypes.STATEMENT_VARIABLE,
+        LslTypes.STATEMENT_LABEL,
+        LslTypes.STATEMENT_JUMP,
+        LslTypes.STATEMENT_STATE,
+        LslTypes.STATEMENT_RETURN,
+        LslTypes.STATEMENT_IF,
+        LslTypes.STATEMENT_WHILE,
+        LslTypes.STATEMENT_DO,
+        LslTypes.STATEMENT_FOR,
+        LslTypes.STATEMENT_EXPRESSION,
+    )
 
     fun createSpacingBuilder(settings: CodeStyleSettings): SpacingBuilder {
-        // TODO: use settings, not fixed rules
         val commonSettings = settings.getCommonSettings(LslLanguage.INSTANCE)
 
-        return SpacingBuilder(settings, LslLanguage.INSTANCE)
+        val isClassNextLine = commonSettings.CLASS_BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE ||
+                commonSettings.CLASS_BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+                commonSettings.CLASS_BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+
+        val isMethodNextLine = commonSettings.METHOD_BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE ||
+                commonSettings.METHOD_BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+                commonSettings.METHOD_BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+
+        val isBlockNextLine = commonSettings.BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE ||
+                commonSettings.BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+                commonSettings.BRACE_STYLE == com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+
+        var builder = SpacingBuilder(settings, LslLanguage.INSTANCE)
             .after(LslTypes.LINE_COMMENT).lineBreakInCode()
             .around(LslTypes.COMMENTS).spaceIf(true)
 
@@ -53,8 +79,11 @@ class LslFormattingModelBuilder : FormattingModelBuilder {
             .aroundInside(LslTypes.OPERATORS, LslTypes.EXPRESSION_UNARY_PREFIX).spaceIf(false)
             .aroundInside(LslTypes.OPERATORS, LslTypes.EXPRESSION_UNARY_POSTFIX).spaceIf(false)
 
+            .before(LslTypes.SEMICOLON).spaceIf(false)
             .after(LslTypes.COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
             .before(LslTypes.COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
+            .betweenInside(LslTypes.SEMICOLON, LslTypes.SEMICOLON, LslTypes.STATEMENT_FOR).spaceIf(false)
+            .betweenInside(LslTypes.SEMICOLON, LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_FOR).spaceIf(false)
             .beforeInside(LslTypes.SEMICOLON, LslTypes.STATEMENT_FOR).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
             .afterInside(LslTypes.SEMICOLON, LslTypes.STATEMENT_FOR).spaceIf(commonSettings.SPACE_AFTER_SEMICOLON)
 
@@ -94,7 +123,9 @@ class LslFormattingModelBuilder : FormattingModelBuilder {
             .afterInside(LslTypes.BRACE_LEFT, LslTypes.STATEMENT_BLOCK).spaceIf(commonSettings.SPACE_WITHIN_BRACES)
             .beforeInside(LslTypes.BRACE_RIGHT, LslTypes.STATEMENT_BLOCK).spaceIf(commonSettings.SPACE_WITHIN_BRACES)
 
-            .afterInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENTS).spaceIf(commonSettings.SPACE_AFTER_QUEST)
+            .betweenInside(parenthesesRightSet, statementsWithoutBlock, LslTypes.STATEMENT_IF).spaceIf(true)
+            .betweenInside(parenthesesRightSet, statementsWithoutBlock, LslTypes.STATEMENT_WHILE).spaceIf(true)
+            .betweenInside(parenthesesRightSet, statementsWithoutBlock, LslTypes.STATEMENT_FOR).spaceIf(true)
             .betweenInside(LslTypes.PARENTHESES, LslTypes.EXPRESSIONS, LslTypes.EXPRESSION_TYPE_CAST)
             .spaceIf(commonSettings.SPACE_AFTER_TYPE_CAST)
             .betweenInside(identifierSet, LslTypes.PARENTHESES, LslTypes.EXPRESSION_FUNCTION_CALL)
@@ -112,28 +143,65 @@ class LslFormattingModelBuilder : FormattingModelBuilder {
             .betweenInside(LslTypes.FOR, LslTypes.PARENTHESES_LEFT, LslTypes.STATEMENT_FOR)
             .spaceIf(commonSettings.SPACE_BEFORE_FOR_PARENTHESES)
 
-            .betweenInside(LslTypes.DEFAULT, LslTypes.BRACE_LEFT, LslTypes.DEFAULT_STATE_DECLARATION)
-            .spaceIf(commonSettings.SPACE_BEFORE_CLASS_LBRACE)
-            .betweenInside(LslTypes.IDENTIFIER, LslTypes.BRACE_LEFT, LslTypes.DEFAULT_STATE_DECLARATION)
-            .spaceIf(commonSettings.SPACE_BEFORE_CLASS_LBRACE)
-            .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.FUNCTION)
-            .spaceIf(commonSettings.SPACE_BEFORE_METHOD_LBRACE)
-            .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.EVENT)
-            .spaceIf(commonSettings.SPACE_BEFORE_METHOD_LBRACE)
-            .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_IF)
-            .spaceIf(commonSettings.SPACE_BEFORE_IF_LBRACE)
-            .betweenInside(LslTypes.ELSE, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_ELSE)
-            .spaceIf(commonSettings.SPACE_BEFORE_ELSE_LBRACE)
-            .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_WHILE)
-            .spaceIf(commonSettings.SPACE_BEFORE_WHILE_LBRACE)
-            .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_FOR)
-            .spaceIf(commonSettings.SPACE_BEFORE_FOR_LBRACE)
-            .betweenInside(LslTypes.DO, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_DO)
-            .spaceIf(commonSettings.SPACE_BEFORE_DO_LBRACE)
+            .betweenInside(LslTypes.STATE, LslTypes.IDENTIFIER, LslTypes.STATE_DECLARATION).spaces(1)
+            .betweenInside(LslTypes.STATE, LslTypes.IDENTIFIER, LslTypes.STATEMENT_STATE).spaces(1)
+            .betweenInside(LslTypes.STATE, LslTypes.DEFAULT, LslTypes.STATEMENT_STATE).spaces(1)
+            .betweenInside(LslTypes.JUMP, LslTypes.IDENTIFIER, LslTypes.STATEMENT_JUMP).spaces(1)
+            .betweenInside(returnSet, LslTypes.EXPRESSIONS, LslTypes.STATEMENT_RETURN).spaces(1)
+            .betweenInside(LslTypes.TYPE_NAME, LslTypes.IDENTIFIER, LslTypes.GLOBAL_VARIABLE).spaces(1)
+            .betweenInside(LslTypes.TYPE_NAME, LslTypes.IDENTIFIER, LslTypes.STATEMENT_VARIABLE).spaces(1)
+            .betweenInside(LslTypes.TYPE_NAME, LslTypes.IDENTIFIER, LslTypes.ARGUMENT).spaces(1)
+            .betweenInside(LslTypes.TYPE_NAME, LslTypes.IDENTIFIER, LslTypes.FUNCTION).spaces(1)
 
-            .beforeInside(LslTypes.STATEMENT_ELSE, LslTypes.STATEMENT_IF)
-            .spaceIf(commonSettings.SPACE_BEFORE_ELSE_KEYWORD)
-            .beforeInside(LslTypes.WHILE, LslTypes.STATEMENT_DO).spaceIf(commonSettings.SPACE_BEFORE_WHILE_KEYWORD)
+        if (isClassNextLine) {
+            builder = builder
+                .betweenInside(LslTypes.DEFAULT, LslTypes.BRACE_LEFT, LslTypes.DEFAULT_STATE_DECLARATION).lineBreakInCode()
+                .betweenInside(LslTypes.IDENTIFIER, LslTypes.BRACE_LEFT, LslTypes.STATE_DECLARATION).lineBreakInCode()
+        } else {
+            builder = builder
+                .betweenInside(LslTypes.DEFAULT, LslTypes.BRACE_LEFT, LslTypes.DEFAULT_STATE_DECLARATION).spaceIf(commonSettings.SPACE_BEFORE_CLASS_LBRACE)
+                .betweenInside(LslTypes.IDENTIFIER, LslTypes.BRACE_LEFT, LslTypes.STATE_DECLARATION).spaceIf(commonSettings.SPACE_BEFORE_CLASS_LBRACE)
+        }
+
+        if (isMethodNextLine) {
+            builder = builder
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.FUNCTION).lineBreakInCode()
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.EVENT).lineBreakInCode()
+        } else {
+            builder = builder
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.FUNCTION).spaceIf(commonSettings.SPACE_BEFORE_METHOD_LBRACE)
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.EVENT).spaceIf(commonSettings.SPACE_BEFORE_METHOD_LBRACE)
+        }
+
+        if (isBlockNextLine) {
+            builder = builder
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_IF).lineBreakInCode()
+                .betweenInside(LslTypes.ELSE, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_ELSE).lineBreakInCode()
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_WHILE).lineBreakInCode()
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_FOR).lineBreakInCode()
+                .betweenInside(LslTypes.DO, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_DO).lineBreakInCode()
+        } else {
+            builder = builder
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_IF).spaceIf(commonSettings.SPACE_BEFORE_IF_LBRACE)
+                .betweenInside(LslTypes.ELSE, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_ELSE).spaceIf(commonSettings.SPACE_BEFORE_ELSE_LBRACE)
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_WHILE).spaceIf(commonSettings.SPACE_BEFORE_WHILE_LBRACE)
+                .betweenInside(LslTypes.PARENTHESES_RIGHT, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_FOR).spaceIf(commonSettings.SPACE_BEFORE_FOR_LBRACE)
+                .betweenInside(LslTypes.DO, LslTypes.STATEMENT_BLOCK, LslTypes.STATEMENT_DO).spaceIf(commonSettings.SPACE_BEFORE_DO_LBRACE)
+        }
+
+        builder = if (commonSettings.ELSE_ON_NEW_LINE) {
+            builder.beforeInside(LslTypes.STATEMENT_ELSE, LslTypes.STATEMENT_IF).lineBreakInCode()
+        } else {
+            builder.beforeInside(LslTypes.STATEMENT_ELSE, LslTypes.STATEMENT_IF).spaceIf(commonSettings.SPACE_BEFORE_ELSE_KEYWORD)
+        }
+
+        builder = if (commonSettings.WHILE_ON_NEW_LINE) {
+            builder.beforeInside(LslTypes.WHILE, LslTypes.STATEMENT_DO).lineBreakInCode()
+        } else {
+            builder.beforeInside(LslTypes.WHILE, LslTypes.STATEMENT_DO).spaceIf(commonSettings.SPACE_BEFORE_WHILE_KEYWORD)
+        }
+
+        return builder
     }
 
     override fun createModel(formattingContext: FormattingContext): FormattingModel =

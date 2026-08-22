@@ -2,10 +2,11 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.7.10"
     id("org.jetbrains.intellij") version "1.13.3"
+    antlr
 }
 
-group = "io.github.riej"
-version = "0.2.3"
+group = "kool test (from io.github.riej)"
+version = "0.2.4"
 
 sourceSets["main"].java.srcDirs("src/main/gen")
 
@@ -14,7 +15,22 @@ repositories {
 }
 
 dependencies {
+    antlr("org.antlr:antlr4:4.11.1")
     implementation("org.antlr:antlr4-runtime:4.11.1")
+}
+
+tasks.generateGrammarSource {
+    maxHeapSize = "64m"
+    arguments = arguments + listOf("-visitor", "-package", "io.github.riej.lsl.parser")
+    outputDirectory = file("src/main/gen")
+}
+
+tasks.compileKotlin {
+    dependsOn(tasks.generateGrammarSource)
+}
+
+tasks.compileTestKotlin {
+    dependsOn(tasks.generateTestGrammarSource)
 }
 
 // Configure Gradle IntelliJ Plugin

@@ -53,7 +53,8 @@ enum class LslPrimitiveType {
 
         if (this == KEY) {
             return when { // key = key or key = string only
-                (other == KEY || other == STRING) && operation == LslTypes.ASSIGN -> KEY
+                (other == KEY || other == STRING) && (operation == LslTypes.ASSIGN || operation == LslTypes.PLUS_ASSIGN) -> KEY
+                (other == KEY || other == STRING) && operation == LslTypes.PLUS -> STRING
                 (other == KEY || other == STRING) && listOf(LslTypes.EQUAL, LslTypes.NOT_EQUAL).contains(operation) -> INTEGER
                 else -> INVALID
             }
@@ -62,12 +63,13 @@ enum class LslPrimitiveType {
         if (this == STRING) {
             return when {
                 // string = key
-                other == KEY && operation == LslTypes.ASSIGN -> STRING
                 // string = string
                 // string += string
+                // string += key
                 // string + string
-                other == STRING && listOf(LslTypes.ASSIGN, LslTypes.PLUS_ASSIGN, LslTypes.PLUS).contains(operation) -> STRING
-                other == STRING && listOf(LslTypes.EQUAL, LslTypes.NOT_EQUAL).contains(operation) -> INTEGER
+                // string + key
+                (other == KEY || other == STRING) && listOf(LslTypes.ASSIGN, LslTypes.PLUS_ASSIGN, LslTypes.PLUS).contains(operation) -> STRING
+                (other == KEY || other == STRING) && listOf(LslTypes.EQUAL, LslTypes.NOT_EQUAL).contains(operation) -> INTEGER
                 else -> INVALID
             }
         }

@@ -35,9 +35,12 @@ class LslFunction(node: ASTNode) : ASTWrapperLslNamedElement(node), NavigatableP
     override fun getNavigationElement(): PsiElement =
         this.identifyingElement ?: this
 
-    override fun getPresentableText(): String = "$lslType $name(${
-        arguments.joinToString(", ") { "${it.lslType} ${it.name}" }
-    })".trim()
+    override fun getPresentableText(): String {
+        val identifierName = name.takeUnless { it.isNullOrBlank() } ?: identifyingElement?.text?.takeUnless { it.isBlank() } ?: "(anonymous)"
+        val args = arguments.joinToString(", ") { "${it.lslType} ${it.name ?: "(anonymous)"}" }
+        val text = "$lslType $identifierName($args)".trim()
+        return text.ifBlank { "(anonymous)" }
+    }
 
     override fun getIcon(unused: Boolean): Icon = AllIcons.Nodes.Function
 

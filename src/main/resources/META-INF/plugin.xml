@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>io.github.riej.lsl</id>
-    <name>Linden Script (LSL)</name>
-    <version>0.2.3</version>
+    <name>Linden Script (LSL) - Kool fork</name>
+    <version>0.2.4</version>
     <vendor email="riejinn@gmail.com">riejinno</vendor>
 
     <description><![CDATA[
@@ -19,8 +19,15 @@
 
     <depends>com.intellij.modules.platform</depends>
 
+    <applicationListeners>
+        <listener class="io.github.riej.lsl.preprocessor.LslFileSaveListener"
+                  topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    </applicationListeners>
+
     <extensions defaultExtensionNs="com.intellij">
-        <fileType name="LSL file" implementationClass="io.github.riej.lsl.LslFileType" fieldName="INSTANCE" language="LSL" extensions="lsl"/>
+        <fileType name="LSL file" implementationClass="io.github.riej.lsl.LslFileType" fieldName="INSTANCE" language="LSL" extensions="lslp;lslm;lsl"/>
+        <editorNotificationProvider implementation="io.github.riej.lsl.safeguards.LslBuildOutputNotificationProvider" />
+        <writingAccessProvider implementation="io.github.riej.lsl.safeguards.LslBuildOutputWritingAccessProvider" />
         <lang.parserDefinition language="LSL" implementationClass="io.github.riej.lsl.parser.LslParserDefinition" />
         <lang.syntaxHighlighterFactory language="LSL" implementationClass="io.github.riej.lsl.syntax.LslSyntaxHighlighterFactory" />
         <lang.commenter language="LSL" implementationClass="io.github.riej.lsl.syntax.LslCommenter" />
@@ -37,8 +44,15 @@
         <lang.namesValidator language="LSL" implementationClass="io.github.riej.lsl.syntax.LslNamesValidator" />
 
         <lang.formatter language="LSL" implementationClass="io.github.riej.lsl.formatting.LslFormattingModelBuilder" />
+        <lang.formattingModelBuilder language="LSL" implementationClass="io.github.riej.lsl.formatting.LslFormattingModelBuilder" />
 
         <psi.referenceContributor language="LSL" implementation="io.github.riej.lsl.references.LslReferenceContributor" />
+
+        <highlightErrorFilter implementation="io.github.riej.lsl.annotation.LslPreprocessorErrorFilter" />
+        <lang.inspectionSuppressor language="LSL" implementationClass="io.github.riej.lsl.annotation.LslDisabledCodeInspectionSuppressor"/>
+        <annotator language="LSL" implementationClass="io.github.riej.lsl.annotation.LslDisabledCodeAnnotator" />
+        <annotator language="LSL" implementationClass="io.github.riej.lsl.annotation.LslAnnotator" />
+        <colorSettingsPage implementation="io.github.riej.lsl.syntax.LslColorSettingsPage" />
 
         <!-- inspections -->
         <localInspection language="LSL" implementationClass="io.github.riej.lsl.inspections.LslUnusedFunctionInspection"

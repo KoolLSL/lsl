@@ -262,6 +262,11 @@ BlockComment
         -> channel(HIDDEN)
     ;
 
+PREPROCESSOR_DIRECTIVE
+    :   '#' ~[\r\n]*
+        -> channel(HIDDEN)
+    ;
+
 LineComment
     :   '//' ~[\r\n]*
         -> channel(HIDDEN)

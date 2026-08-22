@@ -26,7 +26,8 @@ public class LSLParser extends Parser {
 		BitwiseXor=38, BitwiseNot=39, Semicolon=40, Comma=41, Label=42, Assign=43, 
 		PlusAssign=44, MinusAssign=45, MultipleAssign=46, DivideAssign=47, ModulusAssign=48, 
 		Dot=49, Identifier=50, IntegerConstant=51, FloatingConstant=52, StringConstant=53, 
-		Whitespace=54, Newline=55, BlockComment=56, LineComment=57, UnclosedStringConstant=58;
+		Whitespace=54, Newline=55, BlockComment=56, PREPROCESSOR_DIRECTIVE=57, 
+		LineComment=58, UnclosedStringConstant=59;
 	public static final int
 		RULE_file = 0, RULE_globalVariable = 1, RULE_globalVariableValue = 2, 
 		RULE_function = 3, RULE_argument = 4, RULE_arguments = 5, RULE_defaultStateDeclaration = 6, 
@@ -65,7 +66,7 @@ public class LSLParser extends Parser {
 			"Semicolon", "Comma", "Label", "Assign", "PlusAssign", "MinusAssign", 
 			"MultipleAssign", "DivideAssign", "ModulusAssign", "Dot", "Identifier", 
 			"IntegerConstant", "FloatingConstant", "StringConstant", "Whitespace", 
-			"Newline", "BlockComment", "LineComment", "UnclosedStringConstant"
+			"Newline", "BlockComment", "PREPROCESSOR_DIRECTIVE", "LineComment", "UnclosedStringConstant"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -2720,7 +2721,7 @@ public class LSLParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\u0004\u0001:\u0144\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
+		"\u0004\u0001;\u0144\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
 		"\u0002\u0007\u0002\u0002\u0003\u0007\u0003\u0002\u0004\u0007\u0004\u0002"+
 		"\u0005\u0007\u0005\u0002\u0006\u0007\u0006\u0002\u0007\u0007\u0007\u0002"+
 		"\b\u0007\b\u0002\t\u0007\t\u0002\n\u0007\n\u0002\u000b\u0007\u000b\u0002"+

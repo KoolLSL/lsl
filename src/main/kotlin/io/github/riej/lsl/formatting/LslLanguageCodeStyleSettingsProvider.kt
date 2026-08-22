@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.CodeStyleConfigurable
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import io.github.riej.lsl.LslLanguage
 
@@ -18,37 +19,66 @@ class LslLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider()
     override fun getCodeSample(settingsType: SettingsType): String = """
 integer foo = 123;
 
-string bar(integer a) {
+string bar(integer a)
+{
     list result = ["a"];
     
-    if (a == 0) return "zero";
-    else if (a < 0) return "negative";
-    else if (a > 0) {
-        do {
+    if (a == 0)
+    {
+        return "zero";
+    }
+    else if (a < 0)
+    {
+        return "negative";
+    }
+    else if (a > 0)
+    {
+        do
+        {
             integer i = 0;
             result += (string)a;
-            for (; i < 10; i++) {{
+            for (; i < 10; i++)
+            {
                 a -= i ^ (1 >> i);
-                if (a < 0) jump break;
-            }}
-        } while (a > 0);
-    } else {
+                if (a < 0)
+                {
+                    jump break;
+                }
+            }
+        }
+        while (a > 0);
+    }
+    else
+    {
         return "huh?";
     }
     @break;
     return llList2CSV(result);
 }
 
-default {
-    state_entry() {
+default
+{
+    state_entry()
+    {
         llSay(0, (string)llGetKey() + ": " + bar(foo));
     }
 }
     """.trimIndent()
 
+    override fun customizeDefaults(
+        commonSettings: CommonCodeStyleSettings,
+        indentOptions: CommonCodeStyleSettings.IndentOptions
+    ) {
+        commonSettings.SPACE_AFTER_TYPE_CAST = false
+        commonSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+        commonSettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+        commonSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+        commonSettings.ELSE_ON_NEW_LINE = true
+    }
+
     override fun getIndentOptionsEditor() = SmartIndentOptionsEditor()
 
-    override fun getConfigurableDisplayName(): String = "Linden Script"
+    override fun getConfigurableDisplayName(): String = "LSL Linden Script"
 
     override fun createConfigurable(
         baseSettings: CodeStyleSettings,
@@ -75,7 +105,21 @@ default {
             }
 
             SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {
-                consumer.showStandardOptions("ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS")
+                consumer.showStandardOptions(
+                    "CLASS_BRACE_STYLE",
+                    "METHOD_BRACE_STYLE",
+                    "BRACE_STYLE",
+                    "ELSE_ON_NEW_LINE",
+                    "WHILE_ON_NEW_LINE",
+                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
+                    "KEEP_LINE_BREAKS",
+                    "KEEP_SIMPLE_BLOCKS_IN_ONE_LINE",
+                    "KEEP_SIMPLE_METHODS_IN_ONE_LINE",
+                    "KEEP_SIMPLE_CLASSES_IN_ONE_LINE",
+                )
+                consumer.renameStandardOption("CLASS_BRACE_STYLE", "State declaration")
+                consumer.renameStandardOption("METHOD_BRACE_STYLE", "Function/event declaration")
+                consumer.renameStandardOption("BRACE_STYLE", "Other / Control statements")
             }
 
             SettingsType.SPACING_SETTINGS -> {
