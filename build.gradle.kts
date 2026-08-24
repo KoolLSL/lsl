@@ -5,7 +5,7 @@ plugins {
     antlr
 }
 
-group = "kool test (from io.github.riej)"
+group = "kool (from io.github.riej)"
 version = "0.2.4"
 
 sourceSets["main"].java.srcDirs("src/main/gen")

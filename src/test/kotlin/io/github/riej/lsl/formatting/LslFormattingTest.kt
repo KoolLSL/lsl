@@ -287,7 +287,7 @@ default
 
     fun testConfigurableDisplayName() {
         val provider = LslLanguageCodeStyleSettingsProvider()
-        assertEquals("LSL Linden Script", provider.configurableDisplayName)
+        assertEquals("LSL", provider.configurableDisplayName)
     }
 
     fun testInlineBracesWhenConfigured() {

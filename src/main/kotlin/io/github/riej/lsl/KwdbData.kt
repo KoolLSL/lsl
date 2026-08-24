@@ -9,9 +9,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import com.intellij.util.ResourceUtil
 import com.intellij.xml.util.XmlUtil
 import io.github.riej.lsl.psi.*
+
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import java.nio.file.Path
 
 class KwdbData(project: Project) {
     val data: XmlFile
@@ -32,6 +37,7 @@ class KwdbData(project: Project) {
         }
     }
 
+    /*
     init {
         val resource = ResourceUtil.getResource(javaClass.classLoader, ".", "kwdb.xml")
         val file = VfsUtil.findFileByURL(resource)
@@ -42,6 +48,43 @@ class KwdbData(project: Project) {
         functions = generated.children.filterIsInstance<LslFunction>().associateBy { it.name!! }
         constants = generated.children.filterIsInstance<LslGlobalVariable>().associateBy { it.name!! }
         events = PsiTreeUtil.collectElementsOfType(generated, LslEvent::class.java).associateBy { it.name!! }
+    }
+    */
+
+    init {
+        val xmlVirtualFile: VirtualFile = findCustomOrResourceKwdb()
+
+        data = PsiManager.getInstance(project).findFile(xmlVirtualFile) as XmlFile
+
+        generated = LslElementFactory.createFile(project, generateSource())
+
+        functions = generated.children.filterIsInstance<LslFunction>().associateBy { it.name!! }
+        constants = generated.children.filterIsInstance<LslGlobalVariable>().associateBy { it.name!! }
+        events = PsiTreeUtil.collectElementsOfType(generated, LslEvent::class.java).associateBy { it.name!! }
+    }
+
+    private fun findCustomOrResourceKwdb(): VirtualFile {
+        // 1. Get the PluginId directly from PluginManager
+        val pluginId = PluginManager.getPluginByClassName(javaClass.name)
+        val pluginDirName = pluginId?.idString ?: "lsl"
+
+        // 2. Target path: <ConfigPath>/plugins/<Plugin-ID>/kwdb.xml
+        val customXmlPath = Path.of(PathManager.getConfigPath(), "plugins", pluginDirName, "kwdb.xml")
+        val customFile = customXmlPath.toFile()
+
+        if (customFile.exists()) {
+            val externalVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(customFile)
+            if (externalVFile != null && externalVFile.isValid) {
+                return externalVFile
+            }
+        }
+
+        // 3. Fall back to bundled JAR resource
+        val resourceUrl = javaClass.classLoader.getResource("kwdb.xml")
+            ?: throw IllegalStateException("Bundled kwdb.xml missing from plugin JAR resources")
+
+        return VfsUtil.findFileByURL(resourceUrl)
+            ?: throw IllegalStateException("Could not resolve VirtualFile for bundled kwdb.xml")
     }
 
     fun getByName(name: String?): LslNamedElement? =

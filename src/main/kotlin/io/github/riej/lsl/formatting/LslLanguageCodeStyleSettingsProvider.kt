@@ -78,7 +78,7 @@ default
 
     override fun getIndentOptionsEditor() = SmartIndentOptionsEditor()
 
-    override fun getConfigurableDisplayName(): String = "LSL Linden Script"
+    override fun getConfigurableDisplayName(): String = "LSL"
 
     override fun createConfigurable(
         baseSettings: CodeStyleSettings,
