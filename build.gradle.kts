@@ -1,9 +1,12 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.7.10"
-    id("org.jetbrains.intellij") version "1.13.3"
+    id("org.jetbrains.kotlin.jvm") version "1.9.23"
+    id("org.jetbrains.intellij") version "1.17.3"
     antlr
 }
+
+// Use a build folder out of OneDrive or GitHub
+layout.buildDirectory.set(File("C:/IntelliJBuild/${project.name}"))
 
 group = "kool (from io.github.riej)"
 version = "0.2.4"
@@ -17,6 +20,11 @@ repositories {
 dependencies {
     antlr("org.antlr:antlr4:4.11.1")
     implementation("org.antlr:antlr4-runtime:4.11.1")
+
+    // JUnit 4 dependency for IntelliJ test framework support
+    testImplementation("junit:junit:4.13.2")
+    // OpenTest4J required by IntelliJ 2024.3 BasePlatformTestCase
+    testRuntimeOnly("org.opentest4j:opentest4j:1.3.0")
 }
 
 tasks.generateGrammarSource {
@@ -34,27 +42,38 @@ tasks.compileTestKotlin {
 }
 
 // Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2021.3.3")
-    type.set("IC") // Target IDE Platform
-
-    plugins.set(listOf(/* Plugin Dependencies */))
+    version.set("2024.3")
+    type.set("IC")
+    plugins.set(listOf("java"))
 }
+
+// Disable buildSearchableOptions for fast local development by default.
+val isRelease = properties["release"]?.toString()?.toBoolean() == true
 
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "11"
+        kotlinOptions.jvmTarget = "17"
     }
 
     patchPluginXml {
-        sinceBuild.set("213")
+        sinceBuild.set("243")
         untilBuild.set("")
+    }
+
+    // Skips background settings indexing to keep build under 1 second
+    buildSearchableOptions {
+        enabled = false
+    }
+
+    runIde {
+        autoReloadPlugins.set(true)
+        args = listOf("C:\\Users\\Me\\OneDrive\\Documents\\SL\\IntelliJ\\Rezzer\\Rezzer DEV")
     }
 
     signPlugin {

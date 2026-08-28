@@ -1,5 +1,6 @@
 package io.github.riej.lsl.preprocessor
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
@@ -15,10 +16,14 @@ class LslFileSaveListener : FileDocumentManagerListener {
         if (LslBuildOutputNotificationProvider.isGeneratedBuildFile(file)) return
 
         val projects = ProjectManager.getInstance().openProjects
-        for (project in projects) {
-            if (!project.isDisposed) {
-                PsiDocumentManager.getInstance(project).commitDocument(document)
-                LslPreprocessorEngine.processFileOnSave(file, project)
+
+        // Defer PSI commit and preprocessing to EDT after save lock is released
+        ApplicationManager.getApplication().invokeLater {
+            for (project in projects) {
+                if (!project.isDisposed) {
+                    PsiDocumentManager.getInstance(project).commitDocument(document)
+                    LslPreprocessorEngine.processFileOnSave(file, project)
+                }
             }
         }
     }

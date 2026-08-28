@@ -71,7 +71,6 @@
                 implementationClass="io.github.riej.lsl.completion.LslCompletionContributor"/>
         
         <langCodeStyleSettingsProvider
-                language="LSL"
                 implementation="io.github.riej.lsl.formatting.LslLanguageCodeStyleSettingsProvider" />
 
         <lang.foldingBuilder
@@ -90,10 +89,6 @@
         <lang.formatter
                 language="LSL"
                 implementationClass="io.github.riej.lsl.formatting.LslFormattingModelBuilder"/>
-        <lang.formattingModelBuilder
-                language="LSL"
-                implementationClass="io.github.riej.lsl.formatting.LslFormattingModelBuilder"/>
-
         <psi.referenceContributor
                 language="LSL"
                 implementation="io.github.riej.lsl.references.LslReferenceContributor"/>
@@ -114,9 +109,11 @@
         <iconProvider
                 implementation="io.github.riej.lsl.LslIconProvider"/>
 
-        <!-- Settings page in IntelliJ Preferences (Languages & Frameworks > LSL) -->
-        <applicationService
-                serviceImplementation="io.github.riej.lsl.settings.LslSettings"/>
+        <projectViewNodeDecorator
+                implementation="io.github.riej.lsl.psi.LslProjectViewNodeDecorator"/>
+
+        <postStartupActivity implementation="io.github.riej.lsl.psi.LslStartupActivity"/>
+
         <applicationConfigurable
                 parentId="language"
                 instance="io.github.riej.lsl.settings.LslSettingsConfigurable"
@@ -251,6 +248,7 @@
 
         <internalFileTemplate
                 name="Linden Script"/>
+|
     </extensions>
     <actions>
         <action

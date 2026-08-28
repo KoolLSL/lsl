@@ -129,9 +129,11 @@ class LslParserAdapter : PsiParser {
         }
 
         override fun enterGlobalVariableValueConstantNegative(ctx: LSLParser.GlobalVariableValueConstantNegativeContext?) {
+            stack.push(builder.mark())
         }
 
         override fun exitGlobalVariableValueConstantNegative(ctx: LSLParser.GlobalVariableValueConstantNegativeContext?) {
+            stack.pop().done(LslTypes.EXPRESSION_UNARY_PREFIX)
         }
 
         override fun enterGlobalVariableValueConstant(ctx: LSLParser.GlobalVariableValueConstantContext?) {

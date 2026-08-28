@@ -1,81 +1,79 @@
 package io.github.riej.lsl.settings
 
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.ui.HyperlinkLabel
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.FormBuilder
-import com.intellij.util.ui.UIUtil
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 class LslSettingsConfigurable : Configurable {
 
-    private lateinit var panel: JComponent
-    private lateinit var optimizeConstants: JBCheckBox
+    private val settings = LslSettings.instance
+    private var panel: DialogPanel? = null
 
     override fun getDisplayName(): String = "LSL Settings"
 
     override fun createComponent(): JComponent {
-        val settings = LslSettingsState.instance
+        val createdPanel = panel {
+            row {
+                checkBox("Constant optimization")
+                    .bindSelected(settings::optimizeConstants)
+                    .comment("""
+                    Inlines constant values and pre-calculates math.
+                    Example: <code>integer SECONDS_PER_HOUR = 3600; llSetTimer(24 * SECONDS_PER_HOUR);
+                    becomes: llSetTimer(86400);</code></pre>
+                    Enable for release scripts to reduce memory usage; disable when debugging.
+                     """.trimIndent())
+            }
 
-        optimizeConstants = JBCheckBox("Enable constant optimization", settings.optimizeConstants)
+            separator()
 
-        val kwdbPath = PathManager.getOptionsPath()
-        val kwdbInfoLabel = JBLabel(
-            "<html>" +
-                    "<b>Custom Keyword Database (kwdb.xml):</b><br>" +
-                    "To override default LSL constants, events, and functions, place your custom <code>kwdb.xml</code> file in:<br>" +
-                    "<code>$kwdbPath</code><br>" +
-                    "<i>Restart the IDE after replacing the file to reload definitions.</i>" +
-                    "</html>"
-        ).apply {
-            componentStyle = UIUtil.ComponentStyle.SMALL
-            fontColor = UIUtil.FontColor.BRIGHTER
-        }
+            row {
+                text("""
+                    <b>Custom Keyword Database (kwdb.xml)</b><br>
+                    To update LSL functions, events, and constants without waiting for a plugin release, download a newer <code>kwdb.xml</code> from <a href="https://github.com/Sei-Lisa/kwdb">GitHub (Sei-Lisa/kwdb)</a> and select it below.<br>
+                    <i>Leave blank to use the plugin's original definitions. Restart IDE after changing.</i>
+                """.trimIndent())
+            }
 
-        // Hardcoded string targets
-        val codeStyleLink = HyperlinkLabel("Configure Code Style (LSL)...").apply {
-            addHyperlinkListener {
-                ShowSettingsUtil.getInstance().showSettingsDialog(
-                    null,
-                    "preferences.sourceCode.LSL"
+            row("Custom kwdb.xml path:") {
+                val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("xml")
+                    .withTitle("Select KWDB File")
+                    .withDescription("Select your kwdb.xml file")
+
+                textFieldWithBrowseButton(
+                    fileChooserDescriptor = descriptor
                 )
+                    .bindText(settings::customKwdbPath)
+                    .columns(COLUMNS_LARGE)
+            }
+
+            separator()
+
+            row {
+                text("""
+                    <b>Related Settings</b><br>
+                    • To customize formatting rules, go to <b>Editor | Code Style | LSL</b>.<br>
+                    • To adjust syntax highlighting, go to <b>Editor | Color Scheme | LSL</b>.
+                """.trimIndent())
             }
         }
 
-        val colorSchemeLink = HyperlinkLabel("Configure Colors & Fonts (LSL)...").apply {
-            addHyperlinkListener {
-                ShowSettingsUtil.getInstance().showSettingsDialog(
-                    null,
-                    "reference.settingsdialog.IDE.editor.colors.LSL"
-                )
-            }
-        }
-
-        panel = FormBuilder.createFormBuilder()
-            .addComponent(optimizeConstants)
-            .addSeparator()
-            .addComponent(kwdbInfoLabel)
-            .addSeparator()
-            .addComponent(codeStyleLink)
-            .addComponent(colorSchemeLink)
-            .addComponentFillVertically(JPanel(), 0)
-            .panel
-
-        return panel
+        panel = createdPanel
+        return createdPanel
     }
 
-    override fun isModified(): Boolean =
-        LslSettingsState.instance.optimizeConstants != optimizeConstants.isSelected
+    override fun isModified(): Boolean = panel?.isModified() ?: false
 
     override fun apply() {
-        LslSettingsState.instance.optimizeConstants = optimizeConstants.isSelected
+        panel?.apply()
     }
 
     override fun reset() {
-        optimizeConstants.isSelected = LslSettingsState.instance.optimizeConstants
+        panel?.reset()
     }
 }

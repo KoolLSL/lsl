@@ -186,15 +186,15 @@ default
 
     class LslCodeStyleConfigurable(
         settings: CodeStyleSettings,
-        cloneSettings: CodeStyleSettings?,
+        cloneSettings: CodeStyleSettings,
         displayName: @NlsContexts.ConfigurableName String?
     ) : CodeStyleAbstractConfigurable(settings, cloneSettings, displayName) {
-        override fun createPanel(settings: CodeStyleSettings?): CodeStyleAbstractPanel =
+        override fun createPanel(settings: CodeStyleSettings): CodeStyleAbstractPanel =
             LslCodeStyleMainPanel(currentSettings, settings)
     }
 
     class LslCodeStyleMainPanel(
-        currentSettings: CodeStyleSettings?,
-        settings: CodeStyleSettings?
+        currentSettings: CodeStyleSettings,
+        settings: CodeStyleSettings
     ) : TabbedLanguageCodeStylePanel(LslLanguage.INSTANCE, currentSettings, settings)
 }

@@ -18,7 +18,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse("Inlined global PREFIX should not be declared", result.contains("string PREFIX ="))
         assertFalse("Inlined global TIMEOUT should not be declared", result.contains("integer TIMEOUT ="))
@@ -39,7 +39,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse("Inlined global VALUE definition should be stripped", result.contains("integer VALUE = 100;"))
         assertTrue("Local VALUE definition should be kept", result.contains("integer VALUE = 5;"))
@@ -62,7 +62,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse("Function declaration should not be emitted", result.contains("integer add("))
         assertTrue("Single expression call should expand and fold directly", result.contains("integer x = 3;"))
@@ -83,7 +83,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse(result.contains("integer multiply("))
         assertFalse(result.contains("string TAG ="))
@@ -113,13 +113,13 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse("Function computeSum should not be declared", result.contains("integer computeSum("))
-        assertTrue("Parameter n should be renamed uniquely", result.contains("__inline_computeSum_n_1"))
-        assertTrue("Local total should be renamed uniquely to avoid collision", result.contains("__inline_computeSum_total_1"))
-        assertTrue("Local i should be renamed uniquely", result.contains("__inline_computeSum_i_1"))
-        assertTrue("Return variable should be defined", result.contains("__inline_computeSum_ret_1"))
+        assertTrue("Parameter n should be renamed uniquely", result.contains("_i1_n"))
+        assertTrue("Local total should be renamed uniquely to avoid collision", result.contains("_i1_total"))
+        assertTrue("Local i should be renamed uniquely", result.contains("_i1_i"))
+        assertTrue("Return variable should be defined", result.contains("_i1_ret"))
         assertTrue("Caller's total variable must be preserved", result.contains("integer total = 999;"))
     }
 
@@ -139,12 +139,12 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
-        assertTrue(result.contains("__inline_doubleVal_x_1"))
-        assertTrue(result.contains("__inline_doubleVal_temp_1"))
-        assertTrue(result.contains("__inline_doubleVal_x_2"))
-        assertTrue(result.contains("__inline_doubleVal_temp_2"))
+        assertTrue(result.contains("_i1_x"))
+        assertTrue(result.contains("_i1_temp"))
+        assertTrue(result.contains("_i2_x"))
+        assertTrue(result.contains("_i2_temp"))
     }
 
     fun testVoidBlockFunctionInlining() {
@@ -162,13 +162,13 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse(result.contains("logMessage(string"))
-        assertTrue(result.contains("__inline_logMessage_prefix_1 = \"WARN\";"))
-        assertTrue(result.contains("__inline_logMessage_msg_1 = \"Disk full\";"))
-        assertTrue(result.contains("string __inline_logMessage_formatted_1 = __inline_logMessage_prefix_1 + \" : \" + __inline_logMessage_msg_1;"))
-        assertTrue(result.contains("llOwnerSay(__inline_logMessage_formatted_1);"))
+        assertTrue(result.contains("_i1_prefix = \"WARN\";"))
+        assertTrue(result.contains("_i1_msg = \"Disk full\";"))
+        assertTrue(result.contains("string _i1_formatted = _i1_prefix + \" : \" + _i1_msg;"))
+        assertTrue(result.contains("llOwnerSay(_i1_formatted);"))
     }
 
     fun testRecursiveFunctionInliningRejection() {
@@ -189,7 +189,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertTrue("Recursive function should be kept as standard function", result.contains("integer factorial(integer n)"))
         assertTrue("Call to factorial should remain intact", result.contains("factorial(5)"))
@@ -215,7 +215,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertTrue("Mutual recursive funcA should be retained", result.contains("integer funcA("))
         assertTrue("Mutual recursive funcB should be retained", result.contains("integer funcB("))
@@ -242,7 +242,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("main.lslp", mainCode)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse("square function should not be declared", result.contains("integer square("))
         assertFalse("MODULE_NAME should not be declared", result.contains("string MODULE_NAME ="))
@@ -270,7 +270,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse(result.contains("TAG ="))
         assertFalse(result.contains("square("))
@@ -297,15 +297,15 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse(result.contains("integer maxVal("))
-        assertTrue(result.contains("__inline_maxVal_a_1 = 10;"))
-        assertTrue(result.contains("__inline_maxVal_b_1 = 20;"))
-        assertTrue(result.contains("__inline_maxVal_ret_1"))
-        assertTrue(result.contains("jump __inline_maxVal_end_1;"))
-        assertTrue(result.contains("@__inline_maxVal_end_1;"))
-        assertTrue(result.contains("integer m = __inline_maxVal_ret_1;"))
+        assertTrue(result.contains("_i1_a = 10;"))
+        assertTrue(result.contains("_i1_b = 20;"))
+        assertTrue(result.contains("_i1_ret"))
+        assertTrue(result.contains("jump _i1_end;"))
+        assertTrue(result.contains("@_i1_end;"))
+        assertTrue(result.contains("integer m = _i1_ret;"))
     }
 
     fun testGlobalVariableVectorInlining() {
@@ -321,7 +321,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse(result.contains("vector OFFSET ="))
         assertTrue(result.contains("vector v = <1.0, 2.0, 3.0>;"))
@@ -351,7 +351,7 @@ default {
         """.trimIndent()
 
         val psiFile = myFixture.configureByText("test.lslp", code)
-        val result = LslPreprocessorEngine.preprocess(psiFile)
+        val result = LslPreprocessorEngine.preprocessFile(psiFile)
 
         assertFalse("inlinedHelper should not be emitted", result.contains("integer inlinedHelper("))
         assertTrue("normalHelper should be retained because it is used", result.contains("integer normalHelper(integer a)"))

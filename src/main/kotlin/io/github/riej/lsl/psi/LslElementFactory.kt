@@ -43,4 +43,10 @@ object LslElementFactory {
         val file = createFile(project, "default { state_entry() { integer something = (${expression.text}); } }")
         return PsiTreeUtil.findChildOfType(file, LslExpressionParentheses::class.java)!!
     }
+
+    @JvmStatic
+    fun createExpression(project: Project, expression: String): LslExpression {
+        val file = createFile(project, "default { state_entry() { integer something = $expression; } }")
+        return PsiTreeUtil.findChildOfType(file, LslStatementVariable::class.java)!!.expression!!
+    }
 }

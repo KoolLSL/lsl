@@ -116,4 +116,146 @@ default {
         assertNotNull(kwdb.functions["llSay"])
         assertNotNull(kwdb.events["state_entry"])
     }
+
+    fun testRecursiveAndConditionalIncludeCollection() {
+        myFixture.addFileToProject(
+            "HeaderB.lslm",
+            """
+            integer B_VAL = 20;
+            """.trimIndent()
+        )
+
+        myFixture.addFileToProject(
+            "HeaderA.lslm",
+            """
+            #include "HeaderB.lslm"
+            integer A_VAL = 10;
+            """.trimIndent()
+        )
+
+        myFixture.addFileToProject(
+            "HeaderC.lslm",
+            """
+            integer C_VAL = 30;
+            """.trimIndent()
+        )
+
+        myFixture.addFileToProject(
+            "HeaderD.lslm",
+            """
+            integer D_VAL = 40;
+            """.trimIndent()
+        )
+
+        val mainFile = myFixture.configureByText(
+            "Root.lslp",
+            """
+            #define USE_C
+            #include "HeaderA.lslm"
+            #ifdef USE_C
+            #include "HeaderC.lslm"
+            #endif
+            #ifndef USE_C
+            #include "HeaderD.lslm"
+            #endif
+
+            default {
+                state_entry() {}
+            }
+            """.trimIndent()
+        )
+
+        val included = io.github.riej.lsl.preprocessor.LslPreprocessorEngine.getIncludedFiles(mainFile)
+        val includedNames = included.map { it.name }.toSet()
+
+        assertTrue(includedNames.contains("HeaderA.lslm"))
+        assertTrue(includedNames.contains("HeaderB.lslm"))
+        assertTrue(includedNames.contains("HeaderC.lslm"))
+        assertFalse(includedNames.contains("HeaderD.lslm"))
+    }
+
+    fun testCyclicIncludeSafety() {
+        myFixture.addFileToProject(
+            "CycleA.lslm",
+            """
+            #include "CycleB.lslm"
+            integer CYCLE_A = 1;
+            """.trimIndent()
+        )
+
+        myFixture.addFileToProject(
+            "CycleB.lslm",
+            """
+            #include "CycleA.lslm"
+            integer CYCLE_B = 2;
+            """.trimIndent()
+        )
+
+        val mainFile = myFixture.configureByText(
+            "CycleMain.lslp",
+            """
+            #include "CycleA.lslm"
+            default {
+                state_entry() {}
+            }
+            """.trimIndent()
+        )
+
+        val included = io.github.riej.lsl.preprocessor.LslPreprocessorEngine.getIncludedFiles(mainFile)
+        val includedNames = included.map { it.name }.toSet()
+
+        assertTrue(includedNames.contains("CycleA.lslm"))
+        assertTrue(includedNames.contains("CycleB.lslm"))
+        assertEquals(2, included.size)
+    }
+
+    fun testMissingIncludeWarningAnnotation() {
+        myFixture.configureByText(
+            "TestIncludeWarning.lslp",
+            """
+            #include "missing_file.lslm"
+            #ifdef NEVER_DEFINED
+            #include "ignored_missing.lslm"
+            #endif
+
+            default {
+                state_entry() {}
+            }
+            """.trimIndent()
+        )
+
+        val highlights = myFixture.doHighlighting()
+        val warningHighlights = highlights.filter { it.severity == com.intellij.lang.annotation.HighlightSeverity.WARNING }
+
+        assertTrue(warningHighlights.any { it.description == "missing_file.lslm to include not found" })
+        assertFalse(warningHighlights.any { it.description == "ignored_missing.lslm to include not found" })
+    }
+
+    fun testPreprocessIncludeFromBuffer() {
+        myFixture.addFileToProject(
+            "BufferHeader.lslm",
+            """
+            integer BUFFER_VAL = 99;
+            void bufferFunc() {
+                llOwnerSay("hello");
+            }
+            """.trimIndent()
+        )
+
+        val mainFile = myFixture.configureByText(
+            "BufferMain.lslp",
+            """
+            #include "BufferHeader.lslm"
+            default {
+                state_entry() {
+                    bufferFunc();
+                }
+            }
+            """.trimIndent()
+        )
+
+        val output = io.github.riej.lsl.preprocessor.LslPreprocessorEngine.preprocessFile(mainFile)
+        assertTrue(output.contains("bufferFunc"))
+        assertTrue(output.contains("Begin Include: BufferHeader.lslm"))
+    }
 }

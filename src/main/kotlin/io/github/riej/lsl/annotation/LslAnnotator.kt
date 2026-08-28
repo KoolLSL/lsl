@@ -4,6 +4,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import io.github.riej.lsl.KwdbData
 import io.github.riej.lsl.preprocessor.LslPreprocessorEngine
 import io.github.riej.lsl.psi.LslEvent
@@ -13,6 +14,11 @@ import io.github.riej.lsl.syntax.LslColorKeys
 
 class LslAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+        if (element is PsiFile) {
+            LslPreprocessorEngine.annotateIncludes(element, holder)
+            return
+        }
+
         if (LslPreprocessorEngine.isElementDisabled(element)) return
 
         when (element) {

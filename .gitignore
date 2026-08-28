@@ -1,24 +1,21 @@
-.idea
-
-.gradle
+# Local Build Outputs & Caches
+.gradle/
+.kotlin/
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-*.iws
-*.iml
-*.ipr
+bin/
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
-### Eclipse ###
+# IDE & Editor Settings
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Keep Gradle Wrapper Executable Files
+!gradle/wrapper/gradle-wrapper.jar
+
+# Eclipse & NetBeans Junk
 .apt_generated
 .classpath
 .factorypath
@@ -26,20 +23,7 @@ out/
 .settings
 .springBeans
 .sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
-.vscode/
-
-### Mac OS ###
+# OS-Specific Files
 .DS_Store
-/.idea/
+Thumbs.db
