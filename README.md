@@ -17,7 +17,7 @@ Write LSL (Linden Script Language) directly inside IntelliJ IDEA, PyCharm, Andro
 
 1. Open your JetBrains IDE (IntelliJ IDEA, PyCharm, Android Studio, etc.).
 2. Go to **Settings** (or **Preferences** on macOS) $\rightarrow$ **Plugins**.
-3. ~~Search for `Linden Script (LSL)` under the **Marketplace** tab~~, or click the **⚙️ icon** $\rightarrow$ **Install Plugin from Disk...** to use a downloaded `.zip` from [GitHub Releases](https://github.com/KoolLSL/lsl-intellij/releases).
+3. ~~Search for `Linden Script (LSL)` under the **Marketplace** tab~~, or click the **⚙️ icon** $\rightarrow$ **Install Plugin from Disk...** to use a downloaded `.zip` from [GitHub Releases](https://github.com/KoolLSL/lsl/releases).
 4. Click **Install** and restart your IDE if prompted.
 
 ### Quick Start
@@ -34,7 +34,7 @@ Write LSL (Linden Script Language) directly inside IntelliJ IDEA, PyCharm, Andro
 
 ### Issues & Feedback
 
-> **Note:** This plugin is a personal side project and may not be 100% perfect. If you run into obvious issues, please report them on [GitHub Issues](https://github.com/KoolLSL/lsl-intellij/issues).
+> **Note:** This plugin is a personal side project and may not be 100% perfect. If you run into obvious issues, please report them on [GitHub Issues](https://github.com/KoolLSL/lsl/issues).
 
 This project is a modernized fork of the original [riej/lsl](https://github.com/riej/lsl) plugin.
 
