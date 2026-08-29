@@ -29,7 +29,7 @@ dependencies {
 
 tasks.generateGrammarSource {
     maxHeapSize = "64m"
-    arguments = arguments + listOf("-visitor", "-package", "io.github.riej.lsl.parser")
+    arguments = arguments + listOf("-visitor", "-package", "io.github.koollsl.lsl.parser")
     outputDirectory = file("src/main/gen")
 }
 

@@ -1,0 +1,27 @@
+package io.github.koollsl.lsl.psi
+
+import com.intellij.extapi.psi.ASTWrapperPsiElement
+import com.intellij.lang.ASTNode
+import com.intellij.navigation.ItemPresentation
+import com.intellij.psi.PsiElement
+import io.github.koollsl.lsl.LslIcons
+import io.github.koollsl.lsl.parser.LslTypes
+import javax.swing.Icon
+
+class LslStateDefault(node: ASTNode) : ASTWrapperPsiElement(node), LslState, ItemPresentation {
+    override fun setName(name: String): PsiElement =
+        this
+
+    override fun getNameIdentifier(): PsiElement? = findChildByType(LslTypes.DEFAULT)
+
+    override fun getName(): String? = nameIdentifier?.text
+
+    override fun getPresentation(): ItemPresentation? = this
+
+    override fun getPresentableText(): String = "default"
+
+    override fun getIcon(unused: Boolean): Icon = LslIcons.STATE
+
+    override fun getNavigationElement(): PsiElement =
+        this.identifyingElement ?: this
+}

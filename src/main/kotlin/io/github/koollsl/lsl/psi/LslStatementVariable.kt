@@ -1,0 +1,62 @@
+package io.github.koollsl.lsl.psi
+
+import com.intellij.icons.AllIcons
+import com.intellij.lang.ASTNode
+import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
+import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiElement
+import io.github.koollsl.lsl.LslPrimitiveType
+import io.github.koollsl.lsl.documentation.DocumentationUtils
+import io.github.koollsl.lsl.documentation.LslDocumentedElement
+import io.github.koollsl.lsl.parser.LslTypes
+import io.github.koollsl.lsl.syntax.LslSyntaxHighlighter
+import javax.swing.Icon
+
+class LslStatementVariable(node: ASTNode) : ASTWrapperLslNamedElement(node), LslStatement, NavigatablePsiElement,
+    LslVariable, LslDocumentedElement {
+    override val lslType: LslPrimitiveType
+        get() = LslPrimitiveType.fromString(findChildByType<PsiElement?>(LslTypes.TYPE_NAME)?.text)
+
+    override val expression: LslExpression?
+        get() = findChildByType(LslTypes.EXPRESSIONS)
+
+    override fun getNavigationElement(): PsiElement =
+        this.identifyingElement ?: this
+
+    override fun getIcon(unused: Boolean): Icon = AllIcons.Nodes.Variable
+
+    override fun generateDocumentation(): String {
+        val sb = StringBuilder()
+
+        sb.append(DocumentationMarkup.DEFINITION_START)
+        HtmlSyntaxInfoUtil.appendStyledSpan(
+            sb,
+            LslSyntaxHighlighter.TYPENAME,
+            lslType.toString(),
+            DocumentationSettings.getHighlightingSaturation(true)
+        )
+        sb.append(" $name")
+        val expression = expression
+        if (expression != null) {
+            sb.append(" = ${expression.text}")
+        }
+        HtmlSyntaxInfoUtil.appendStyledSpan(
+            sb,
+            LslSyntaxHighlighter.SEMICOLON,
+            ";",
+            DocumentationSettings.getHighlightingSaturation(true)
+        )
+        sb.append(DocumentationMarkup.DEFINITION_END)
+
+        val description = DocumentationUtils.commentsToDescription(this)
+        if (description.isNotBlank()) {
+            sb.append(DocumentationMarkup.CONTENT_START)
+            sb.append(description)
+            sb.append(DocumentationMarkup.CONTENT_END)
+        }
+
+        return sb.toString()
+    }
+}

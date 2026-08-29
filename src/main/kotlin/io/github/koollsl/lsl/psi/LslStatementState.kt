@@ -1,0 +1,30 @@
+package io.github.koollsl.lsl.psi
+
+import com.intellij.extapi.psi.ASTWrapperPsiElement
+import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
+import com.intellij.psi.tree.TokenSet
+import io.github.koollsl.lsl.parser.LslTypes
+
+class LslStatementState(node: ASTNode) : ASTWrapperPsiElement(node), LslStatement {
+    companion object {
+        private val IDENTIFIER_OR_DEFAULT = TokenSet.create(LslTypes.IDENTIFIER, LslTypes.DEFAULT)
+    }
+
+    val stateNameIdentifier: PsiElement?
+        get() = findChildByType(IDENTIFIER_OR_DEFAULT)
+
+    val stateName: String?
+        get() = stateNameIdentifier?.text
+
+    val state: LslState?
+        get() = (containingFile as LslFile).children
+            .filterIsInstance<LslState>()
+            .firstOrNull {it.name == stateName }
+
+    override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
+
+    override fun getReference(): PsiReference? = references.firstOrNull()
+}

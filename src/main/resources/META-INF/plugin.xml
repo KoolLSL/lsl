@@ -1,10 +1,9 @@
 <idea-plugin>
-    <id>io.github.riej.lsl</id>
+    <id>io.github.koollsl.lsl</id>
     <name>Linden Script (LSL) - Kool fork</name>
     <version>0.2.4</version>
-    <vendor
-            email="riejinn@gmail.com">riejinno
-    </vendor>
+
+    <vendor url="https://github.com/KoolLSL">KoolLSL</vendor>
 
     <description><![CDATA[
       Linden Script (LSL) language plugin.<br />
@@ -19,15 +18,14 @@
       <b>WARNING:</b> the plugin is in early access and may contain problems.
       <br />
       Please report about issues to <a
-            href="https://github.com/riej/lsl/issues">GitHub</a> or IM/notecard in SecondLife to <a
-            href="https://world.secondlife.com/resident/aa508166-7fcc-491e-977a-93fc3e59f10e">riejinno</a>.
+            href="https://github.com/koollsl/lsl/issues">GitHub</a>
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
 
     <applicationListeners>
         <listener
-                class="io.github.riej.lsl.preprocessor.LslFileSaveListener"
+                class="io.github.koollsl.lsl.preprocessor.LslFileSaveListener"
                   topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     </applicationListeners>
 
@@ -35,213 +33,213 @@
             defaultExtensionNs="com.intellij">
         <fileType
                 name="LSL file"
-                implementationClass="io.github.riej.lsl.LslFileType"
+                implementationClass="io.github.koollsl.lsl.LslFileType"
                 fieldName="INSTANCE"
                 language="LSL"
                 extensions="lslp;lslm;lsl"/>
         <editorNotificationProvider
-                implementation="io.github.riej.lsl.safeguards.LslBuildOutputNotificationProvider"/>
+                implementation="io.github.koollsl.lsl.safeguards.LslBuildOutputNotificationProvider"/>
         <writingAccessProvider
-                implementation="io.github.riej.lsl.safeguards.LslBuildOutputWritingAccessProvider"/>
+                implementation="io.github.koollsl.lsl.safeguards.LslBuildOutputWritingAccessProvider"/>
         <lang.parserDefinition
                 language="LSL"
-                implementationClass="io.github.riej.lsl.parser.LslParserDefinition"/>
+                implementationClass="io.github.koollsl.lsl.parser.LslParserDefinition"/>
         <lang.syntaxHighlighterFactory
                 language="LSL"
-                implementationClass="io.github.riej.lsl.syntax.LslSyntaxHighlighterFactory"/>
+                implementationClass="io.github.koollsl.lsl.syntax.LslSyntaxHighlighterFactory"/>
         <lang.commenter
                 language="LSL"
-                implementationClass="io.github.riej.lsl.syntax.LslCommenter"/>
+                implementationClass="io.github.koollsl.lsl.syntax.LslCommenter"/>
         <lang.braceMatcher
                 language="LSL"
-                implementationClass="io.github.riej.lsl.syntax.LslPairedBraceMatcher"/>
+                implementationClass="io.github.koollsl.lsl.syntax.LslPairedBraceMatcher"/>
         <lang.psiStructureViewFactory
                 language="LSL"
-                implementationClass="io.github.riej.lsl.structure.LslStructureViewFactory"/>
+                implementationClass="io.github.koollsl.lsl.structure.LslStructureViewFactory"/>
         <navbar
-                implementation="io.github.riej.lsl.structure.LslStructureAwareNavBar"/>
+                implementation="io.github.koollsl.lsl.structure.LslStructureAwareNavBar"/>
         <lang.quoteHandler
                 language="LSL"
-                implementationClass="io.github.riej.lsl.syntax.LslQuoteHandler"/>
+                implementationClass="io.github.koollsl.lsl.syntax.LslQuoteHandler"/>
         <lang.documentationProvider
                 language="LSL"
-                implementationClass="io.github.riej.lsl.documentation.LslDocumentationProvider"/>
+                implementationClass="io.github.koollsl.lsl.documentation.LslDocumentationProvider"/>
         <completion.contributor
                 language="LSL"
-                implementationClass="io.github.riej.lsl.completion.LslCompletionContributor"/>
+                implementationClass="io.github.koollsl.lsl.completion.LslCompletionContributor"/>
         
         <langCodeStyleSettingsProvider
-                implementation="io.github.riej.lsl.formatting.LslLanguageCodeStyleSettingsProvider" />
+                implementation="io.github.koollsl.lsl.formatting.LslLanguageCodeStyleSettingsProvider" />
 
         <lang.foldingBuilder
                 language="LSL"
-                implementationClass="io.github.riej.lsl.structure.LslFoldingBuilder"/>
+                implementationClass="io.github.koollsl.lsl.structure.LslFoldingBuilder"/>
         <lang.findUsagesProvider
                 language="LSL"
-                implementationClass="io.github.riej.lsl.structure.LslFindUsagesProvider"/>
+                implementationClass="io.github.koollsl.lsl.structure.LslFindUsagesProvider"/>
         <spellchecker.support
                 language="LSL"
-                implementationClass="io.github.riej.lsl.formatting.LslSpellcheckingStrategy"/>
+                implementationClass="io.github.koollsl.lsl.formatting.LslSpellcheckingStrategy"/>
         <lang.namesValidator
                 language="LSL"
-                implementationClass="io.github.riej.lsl.syntax.LslNamesValidator"/>
+                implementationClass="io.github.koollsl.lsl.syntax.LslNamesValidator"/>
 
         <lang.formatter
                 language="LSL"
-                implementationClass="io.github.riej.lsl.formatting.LslFormattingModelBuilder"/>
+                implementationClass="io.github.koollsl.lsl.formatting.LslFormattingModelBuilder"/>
         <psi.referenceContributor
                 language="LSL"
-                implementation="io.github.riej.lsl.references.LslReferenceContributor"/>
+                implementation="io.github.koollsl.lsl.references.LslReferenceContributor"/>
 
         <highlightErrorFilter
-                implementation="io.github.riej.lsl.annotation.LslPreprocessorErrorFilter"/>
+                implementation="io.github.koollsl.lsl.annotation.LslPreprocessorErrorFilter"/>
         <lang.inspectionSuppressor
                 language="LSL"
-                implementationClass="io.github.riej.lsl.annotation.LslDisabledCodeInspectionSuppressor"/>
+                implementationClass="io.github.koollsl.lsl.annotation.LslDisabledCodeInspectionSuppressor"/>
         <annotator
                 language="LSL"
-                implementationClass="io.github.riej.lsl.annotation.LslDisabledCodeAnnotator"/>
+                implementationClass="io.github.koollsl.lsl.annotation.LslDisabledCodeAnnotator"/>
         <annotator
                 language="LSL"
-                implementationClass="io.github.riej.lsl.annotation.LslAnnotator"/>
+                implementationClass="io.github.koollsl.lsl.annotation.LslAnnotator"/>
         <colorSettingsPage
-                implementation="io.github.riej.lsl.syntax.LslColorSettingsPage"/>
+                implementation="io.github.koollsl.lsl.syntax.LslColorSettingsPage"/>
         <iconProvider
-                implementation="io.github.riej.lsl.LslIconProvider"/>
+                implementation="io.github.koollsl.lsl.LslIconProvider"/>
 
         <projectViewNodeDecorator
-                implementation="io.github.riej.lsl.psi.LslProjectViewNodeDecorator"/>
+                implementation="io.github.koollsl.lsl.psi.LslProjectViewNodeDecorator"/>
 
-        <postStartupActivity implementation="io.github.riej.lsl.psi.LslStartupActivity"/>
+        <postStartupActivity implementation="io.github.koollsl.lsl.psi.LslStartupActivity"/>
 
         <applicationConfigurable
                 parentId="language"
-                instance="io.github.riej.lsl.settings.LslSettingsConfigurable"
-                id="io.github.riej.lsl.settings.LslSettingsConfigurable"
+                instance="io.github.koollsl.lsl.settings.LslSettingsConfigurable"
+                id="io.github.koollsl.lsl.settings.LslSettingsConfigurable"
                 displayName="LSL"/>
 
         <!-- inspections -->
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUnusedFunctionInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedFunctionInspection"
                 displayName="Unused function"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUnusedVariableInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedVariableInspection"
                 displayName="Unused variable"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUnusedArgumentInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedArgumentInspection"
                 displayName="Unused argument"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUnusedStateInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedStateInspection"
                 displayName="Unused state"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUnusedLabelInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedLabelInspection"
                 displayName="Unused label"
                 groupName="LSL"
                 enabledByDefault="true"/>
 
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUndeclaredFunctionInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredFunctionInspection"
                 displayName="Undeclared function"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUndeclaredVariableInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredVariableInspection"
                 displayName="Undeclared variable"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUndeclaredStateInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredStateInspection"
                 displayName="Undeclared state"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUndeclaredLabelInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredLabelInspection"
                 displayName="Undeclared label"
                 groupName="LSL"
                 enabledByDefault="true"/>
 
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslReservedIdentifierInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslReservedIdentifierInspection"
                 displayName="Reserved identifier"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslRedeclaredIdentifierInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslRedeclaredIdentifierInspection"
                 displayName="Redeclared identifier"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslInvalidVectorOrQuaternionItemInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidVectorOrQuaternionItemInspection"
                 displayName="Invalid vector or quaternion item"
                 groupName="LSL"
                 enabledByDefault="true"/>
 
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslEmptyStateBodyInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslEmptyStateBodyInspection"
                 displayName="Empty state"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslUnreachableCodeInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnreachableCodeInspection"
                 displayName="Unreachable code"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslRedundantTypeCastInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslRedundantTypeCastInspection"
                 displayName="Redundant type cast"
                 groupName="LSL"
                 enabledByDefault="true"/>
 
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslInvalidAssignmentTypeInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidAssignmentTypeInspection"
                 displayName="Invalid assignment type"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslInvalidReturnTypeInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidReturnTypeInspection"
                 displayName="Invalid return type"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslInvalidExpressionTypeInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidExpressionTypeInspection"
                 displayName="Invalid expression type"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslInvalidFunctionCallArgumentInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidFunctionCallArgumentInspection"
                 displayName="Invalid function call argument"
                 groupName="LSL"
                 enabledByDefault="true"/>
         <localInspection
                 language="LSL"
-                implementationClass="io.github.riej.lsl.inspections.LslInvalidEventDeclarationInspection"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidEventDeclarationInspection"
                 displayName="Invalid event declaration"
                 groupName="LSL"
                 enabledByDefault="true"/>
@@ -253,7 +251,7 @@
     <actions>
         <action
                 id="LSL.NewLindenScriptFile"
-                class="io.github.riej.lsl.actions.LslCreateFileAction"
+                class="io.github.koollsl.lsl.actions.LslCreateFileAction"
                 text="Linden Script File"
                 description="Create new Linden Script file">
             <add-to-group
