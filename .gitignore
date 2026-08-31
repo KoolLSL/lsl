@@ -27,3 +27,4 @@ out/
 # OS-Specific Files
 .DS_Store
 Thumbs.db
+build.gradle perso.kts
