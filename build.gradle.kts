@@ -83,11 +83,6 @@ tasks {
         enabled = false
     }
 
-    runIde {
-        autoReloadPlugins.set(true)
-        args = listOf("C:\\Users\\Me\\OneDrive\\Documents\\SL\\IntelliJ\\Rezzer\\Rezzer DEV")
-    }
-
     signPlugin {
         certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
         privateKey.set(System.getenv("PRIVATE_KEY"))
@@ -169,13 +164,7 @@ tasks.register("installPluginToIDE") {
                 "-Command",
                 // Stop IntelliJ if running
                 "\$p = Get-Process idea64 -ErrorAction SilentlyContinue; " +
-                        "if (\$p) { \$p.CloseMainWindow(); Start-Sleep -Seconds 2; \$p.Kill() }; " +
-                        // Wait until IntelliJ is fully terminated
-                        "while (Get-Process idea64 -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }; " +
-                        // Delay before restart
-                        "Start-Sleep -Seconds 2; " +
-                        // Restart IntelliJ
-                        "Start-Process \"C:\\\\Program Files\\\\JetBrains\\\\IntelliJ IDEA 2026.2.1\\\\bin\\\\idea64.exe\""
+                        "if (\$p) { \$p.CloseMainWindow(); Start-Sleep -Seconds 2; \$p.Kill() }; "
             )
         }
     }
