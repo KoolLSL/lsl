@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import io.github.koollsl.lsl.settings.LslSettings
 import java.nio.file.Path
 
-class KwdbData(project: Project) {
+class KwdbData(val project: Project) {
     val data: XmlFile
     val lang = "en"
     val generated: LslFile
@@ -61,7 +61,13 @@ class KwdbData(project: Project) {
         events = PsiTreeUtil.collectElementsOfType(generated, LslEvent::class.java).associateBy { it.name!! }
     }
 
+
     private fun findCustomOrResourceKwdb(): VirtualFile {
+
+        fun extractKwdbVersion(xmlFile: XmlFile): String {
+            val root = xmlFile.rootTag ?: return "unknown"
+            return root.getAttributeValue("version") ?: "unknown"
+        }
         val customPathStr = LslSettings.instance.customKwdbPath
 
         if (customPathStr.isNotBlank()) {
@@ -70,19 +76,31 @@ class KwdbData(project: Project) {
             if (customFile.exists()) {
                 val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(customFile)
                 if (vFile != null && vFile.isValid) {
-                    kwdbSourceInfo = "from custom path ($customPath)"
+
+                    // Load PSI to extract version
+                    val xmlPsi = PsiManager.getInstance(project).findFile(vFile) as? XmlFile
+                    val version = xmlPsi?.let { extractKwdbVersion(it) } ?: "unknown"
+
+                    kwdbSourceInfo = "Custom (${customFile.name}, version $version)"
                     return vFile
                 }
             }
         }
 
+        // Integrated fallback
         val resourceUrl = javaClass.classLoader.getResource("kwdb.xml")
             ?: throw IllegalStateException("Bundled kwdb.xml missing from plugin JAR resources")
 
-        kwdbSourceInfo = "integrated"
-        return VfsUtil.findFileByURL(resourceUrl)
+        val integratedVFile = VfsUtil.findFileByURL(resourceUrl)
             ?: throw IllegalStateException("Could not resolve VirtualFile for bundled kwdb.xml")
+
+        val xmlPsi = PsiManager.getInstance(project).findFile(integratedVFile) as? XmlFile
+        val version = xmlPsi?.let { extractKwdbVersion(it) } ?: "unknown"
+
+        kwdbSourceInfo = "Integrated kwdb.xml ($version)"
+        return integratedVFile
     }
+
 
     fun getByName(name: String?): LslNamedElement? =
         functions[name] ?: constants[name]

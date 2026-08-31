@@ -3,6 +3,7 @@ package io.github.koollsl.lsl.annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import io.github.koollsl.lsl.KwdbData
@@ -14,12 +15,14 @@ import io.github.koollsl.lsl.syntax.LslColorKeys
 
 class LslAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+        val engine = element.project.service<LslPreprocessorEngine>()
+
         if (element is PsiFile) {
-            LslPreprocessorEngine.annotateIncludes(element, holder)
+            engine.annotateIncludes(element, holder)
             return
         }
 
-        if (LslPreprocessorEngine.isElementDisabled(element)) return
+        if (engine.isElementDisabled(element)) return
 
         when (element) {
             is LslExpressionFunctionCall -> {

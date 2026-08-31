@@ -23,10 +23,10 @@ class LslSettingsConfigurable : Configurable {
                 checkBox("Constant optimization")
                     .bindSelected(settings::optimizeConstants)
                     .comment("""
-                    Inlines constant values and pre-calculates math.
-                    Example: <code>integer SECONDS_PER_HOUR = 3600; llSetTimer(24 * SECONDS_PER_HOUR);
-                    becomes: llSetTimer(86400);</code></pre>
-                    Enable for release scripts to reduce memory usage; disable when debugging.
+                    Inlines constant values and pre-calculates math.<br>
+                    Example: <code>integer HOUR = 3600; llSetTimer(24 * HOUR);<br>
+                    becomes: llSetTimer(86400);</code></pre><br>
+                    Enable for release to reduce scripts memory; disable when debugging.
                      """.trimIndent())
             }
 
@@ -34,16 +34,15 @@ class LslSettingsConfigurable : Configurable {
 
             row {
                 text("""
-                    <b>Custom Keyword Database (kwdb.xml)</b><br>
-                    To update LSL functions, events, and constants without waiting for a plugin release, download a newer <code>kwdb.xml</code> from <a href="https://github.com/Sei-Lisa/kwdb">GitHub (Sei-Lisa/kwdb)</a> and select it below.<br>
+                    To update the Keyword Database (LSL functions, events, and constants), edit or download a newer <code>kwdb.xml</code> file from <a href="https://github.com/Sei-Lisa/kwdb">github.com/Sei-Lisa/kwdb</a> and select it below.<br>
                     <i>Leave blank to use the plugin's original definitions. Restart IDE after changing.</i>
                 """.trimIndent())
             }
 
-            row("Custom kwdb.xml path:") {
+            row("Custom kwdb.xml:") {
                 val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("xml")
-                    .withTitle("Select KWDB File")
-                    .withDescription("Select your kwdb.xml file")
+                    .withTitle("Select kwdb.xml file")
+                    .withDescription("Select kwdb.xml file")
 
                 textFieldWithBrowseButton(
                     fileChooserDescriptor = descriptor

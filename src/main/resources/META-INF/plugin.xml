@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>io.github.koollsl.lsl</id>
-    <name>Linden Script (LSL) - Kool fork</name>
+    <name>LSL (Linden Scripting Language) Development Kit</name>
     <version>0.2.4</version>
 
     <vendor url="https://github.com/KoolLSL">KoolLSL</vendor>
@@ -22,12 +22,6 @@
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
-
-    <applicationListeners>
-        <listener
-                class="io.github.koollsl.lsl.preprocessor.LslFileSaveListener"
-                  topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
-    </applicationListeners>
 
     <extensions
             defaultExtensionNs="com.intellij">
@@ -119,130 +113,6 @@
                 displayName="LSL"/>
 
         <!-- inspections -->
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedFunctionInspection"
-                displayName="Unused function"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedVariableInspection"
-                displayName="Unused variable"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedArgumentInspection"
-                displayName="Unused argument"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedStateInspection"
-                displayName="Unused state"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedLabelInspection"
-                displayName="Unused label"
-                groupName="LSL"
-                enabledByDefault="true"/>
-
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredFunctionInspection"
-                displayName="Undeclared function"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredVariableInspection"
-                displayName="Undeclared variable"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredStateInspection"
-                displayName="Undeclared state"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredLabelInspection"
-                displayName="Undeclared label"
-                groupName="LSL"
-                enabledByDefault="true"/>
-
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslReservedIdentifierInspection"
-                displayName="Reserved identifier"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslRedeclaredIdentifierInspection"
-                displayName="Redeclared identifier"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidVectorOrQuaternionItemInspection"
-                displayName="Invalid vector or quaternion item"
-                groupName="LSL"
-                enabledByDefault="true"/>
-
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslEmptyStateBodyInspection"
-                displayName="Empty state"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslUnreachableCodeInspection"
-                displayName="Unreachable code"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslRedundantTypeCastInspection"
-                displayName="Redundant type cast"
-                groupName="LSL"
-                enabledByDefault="true"/>
-
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidAssignmentTypeInspection"
-                displayName="Invalid assignment type"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidReturnTypeInspection"
-                displayName="Invalid return type"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidExpressionTypeInspection"
-                displayName="Invalid expression type"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidFunctionCallArgumentInspection"
-                displayName="Invalid function call argument"
-                groupName="LSL"
-                enabledByDefault="true"/>
-        <localInspection
-                language="LSL"
-                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidEventDeclarationInspection"
-                displayName="Invalid event declaration"
-                groupName="LSL"
-                enabledByDefault="true"/>
 
         <internalFileTemplate
                 name="Linden Script"/>

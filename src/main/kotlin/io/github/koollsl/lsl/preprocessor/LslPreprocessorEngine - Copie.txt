@@ -4,7 +4,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -14,6 +13,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.psi.*
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -36,10 +36,12 @@ import kotlin.collections.last
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileVisitor
 
-@Service(Service.Level.PROJECT)
-class LslPreprocessorEngine(private val project: Project) {
+object LslPreprocessorEngine {
 
-    private val MAX_INCLUDE_DEPTH = 30
+    lateinit var project: Project
+        private set
+
+    private const val MAX_INCLUDE_DEPTH = 30
     private val DIRECTIVE_REGEX = Regex("""^\s*#\s*([a-zA-Z_]\w*)(?:\s+(.*)|$)""")
     private val LOG = Logger.getInstance(LslPreprocessorEngine::class.java)
 
@@ -64,20 +66,19 @@ class LslPreprocessorEngine(private val project: Project) {
         val onIncludeFailed: ((includedPath: String, lineNumber: Int) -> Unit)? = null,
     )
 
-//    private fun DEBUG(message: String) {
-//        try {
-//            File("C:/temp/lsl_debug.txt").appendText(message + "\n")
-//        } catch (_: Exception) {
-//            // ignore
-//        }
-//    }
+    private fun DEBUG(message: String) {
+        try {
+            File("C:/temp/lsl_debug.txt").appendText(message + "\n")
+        } catch (_: Exception) {
+            // ignore
+        }
+    }
 
 
 
 
-    private fun walkPreprocessorDirectives(ctx: PreprocessorContext) {
+    private fun walkPreprocessorDirectives(ctx: PreprocessorContext, project: Project) {
         val file = ctx.file ?: return
-        val project = ctx.project
         if (ctx.depth > MAX_INCLUDE_DEPTH || !file.isValid || project.isDisposed) return
         val text = file.text
 
@@ -93,7 +94,7 @@ class LslPreprocessorEngine(private val project: Project) {
         val currentVisited = ctx.visitedFiles + currentIdentifiers
         val stack = ArrayDeque<BlockState>()
 
-        //DEBUG("walkPreprocessorDirectives file: '${file?.name}' project: '${project.name}' depth=${ctx.depth} currentVisited=${currentVisited}")
+        DEBUG("walkPreprocessorDirectives name: '${file?.name}' depth=${ctx.depth} currentVisited=${currentVisited}")
         for ((index, line) in text.lineSequence().withIndex()) {
             val lineNumber = index + 1 // 1-based line number
             val trimmed = line.trim()
@@ -156,13 +157,13 @@ class LslPreprocessorEngine(private val project: Project) {
                         val includedPath = args.trim().trim('"', '<', '>')
                         if (includedPath.isNotEmpty()) {
                             val includedPsi = resolveIncludeFile(includedPath, file, currentVisited)
-                            //DEBUG("    Include name: '${includedPsi?.name}' depth=${ctx.depth}")
+                            DEBUG("    Include name: '${includedPsi?.name}' depth=${ctx.depth}")
                             if (includedPsi != null && includedPsi.isValid) {
                                 // actually process the included file
                                 //ctx.onIncludeResolved?.invoke(includedPsi, ctx.copy(visitedFiles = currentVisited))
                                 val newCtx = PreprocessorContext(
                                     file = includedPsi,
-                                    project = project,
+                                    project = ctx.project,
                                     definitions = ctx.definitions,
                                     visitedFiles = currentVisited,
                                     depth = ctx.depth + 1,
@@ -258,7 +259,7 @@ class LslPreprocessorEngine(private val project: Project) {
                 visited.add(file.name)
 
                 val result = runCatching {
-                    collectIncludedFiles(file = file, file.project ,visitedFiles = visited, depth = 0)
+                    collectIncludedFiles(file = file, visitedFiles = visited, depth = 0)
                 }.getOrDefault(emptySet())
 
                 CachedValueProvider.Result.create(result, file, PsiModificationTracker.MODIFICATION_COUNT)
@@ -271,11 +272,11 @@ class LslPreprocessorEngine(private val project: Project) {
 
     fun resolveIncludeFile(
         includedPath: String,
-        containingFile: PsiFile,
+        containingFile: PsiFile?,
         visitedFiles: Set<String> = emptySet()
     ): PsiFile? {
 
-        val project = containingFile.project
+
         if (project.isDisposed || includedPath.isEmpty()) return null
 
         // --- 1. Normalize path ---
@@ -286,15 +287,15 @@ class LslPreprocessorEngine(private val project: Project) {
 
         val targetPath = if (cleanPath.endsWith(".lslm", ignoreCase = true)) cleanPath else "$cleanPath.lslm"
         val cleanName = targetPath.substringAfterLast('/')
-        //DEBUG("resolveIncludeFile: includedPath='$includedPath', targetPath='$targetPath', " +
-        //        "containing='${containingFile?.name}', visited=${visitedFiles.size}")
+        DEBUG("resolveIncludeFile: includedPath='$includedPath', targetPath='$targetPath', " +
+                "containing='${containingFile?.name}', visited=${visitedFiles.size}")
 
         // --- 2. Resolve containing file directory ---
-        val containingVF = containingFile.virtualFile
-            ?: containingFile.originalFile.virtualFile
-            ?: containingFile.viewProvider.virtualFile
+        val containingVF = containingFile?.virtualFile
+            ?: containingFile?.originalFile?.virtualFile
+            ?: containingFile?.viewProvider?.virtualFile
 
-        val parentDir = containingVF.parent
+        val parentDir = containingVF?.parent
 
         // --- 3. Resolve module content roots ---
         val rootManager = ProjectRootManager.getInstance(project)
@@ -302,8 +303,8 @@ class LslPreprocessorEngine(private val project: Project) {
         val sourceRoots = rootManager.contentSourceRoots.toList()
         val allRoots = (contentRoots + sourceRoots).distinct()
 
-        //DEBUG("    parentDir='${containingFile?.virtualFile?.parent?.path}'")
-        //DEBUG("    allRoots=${allRoots.map { it.path }}")
+        DEBUG("    parentDir='${containingFile?.virtualFile?.parent?.path}'")
+        DEBUG("    allRoots=${allRoots.map { it.path }}")
         // --- 4. Search strategies (NO INDEXING) ---
         fun searchInRoot(root: VirtualFile): VirtualFile? {
             var found: VirtualFile? = null
@@ -329,7 +330,7 @@ class LslPreprocessorEngine(private val project: Project) {
                 // C. Direct VFS walk in all module roots (NO index)
                 ?: allRoots.firstNotNullOfOrNull { searchInRoot(it) }
                 ?: return null
-                //DEBUG("    RESULT virtualFile='${virtualFile?.path}'")
+                DEBUG("    RESULT virtualFile='${virtualFile?.path}'")
 
         // --- 5. Prevent recursive includes ---
         val canonical = virtualFile.canonicalPath ?: virtualFile.path
@@ -342,7 +343,7 @@ class LslPreprocessorEngine(private val project: Project) {
         }
 
         // --- 7. Try PSI ---
-        val psiFile = PsiManager.getInstance(project).findFile(virtualFile)
+        var psiFile = PsiManager.getInstance(project).findFile(virtualFile)
 
         // --- 8. Fallback PSI creation ---
         if (psiFile == null) return null
@@ -366,7 +367,7 @@ class LslPreprocessorEngine(private val project: Project) {
         return psiFile
     }
 
-    fun processLslpFile( virtualFile: VirtualFile, project: Project): VirtualFile? {
+    fun processLslpFile(virtualFile: VirtualFile): VirtualFile? {
         if (project.isDisposed || !virtualFile.isValid) return null
         if (virtualFile.extension?.lowercase() != "lslp") return null
         if (LslBuildOutputNotificationProvider.isGeneratedBuildFile(virtualFile)) return null
@@ -388,7 +389,7 @@ class LslPreprocessorEngine(private val project: Project) {
         }
 
         val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return null
-        val finalizedCode = preprocessFile(psiFile)
+        val finalizedCode = preprocessFile(psiFile, project)
 
         var resultFile: VirtualFile? = null
         ApplicationManager.getApplication().runWriteAction {
@@ -442,14 +443,17 @@ class LslPreprocessorEngine(private val project: Project) {
     }
 
     // Main entry point for processing LSL files on project save
-    fun processFileOnSave(virtualFile: VirtualFile) {
-        if (project.isDisposed || !virtualFile.isValid) return
+    fun processFileOnSave(virtualFile: VirtualFile, fileProject: Project) {
+        if (fileProject.isDisposed || !virtualFile.isValid) return
         val ext = virtualFile.extension?.lowercase() ?: return
 
         if (ext != "lslp" && ext != "lslm") return
 
+        // Store our working project once at call
+        project = fileProject
+
         // Empty log  file for DEBUG
-        //File("C:/temp/lsl_debug.txt").delete()
+        File("C:/temp/lsl_debug.txt").delete()
 
         val documentManager = PsiDocumentManager.getInstance(project)
         val fileDocumentManager = FileDocumentManager.getInstance()
@@ -471,12 +475,12 @@ class LslPreprocessorEngine(private val project: Project) {
 
         // 2. Process dependent files
         if (ext == "lslp") {
-            processLslpFile(virtualFile, project)
+            processLslpFile(virtualFile)
         } else {
             // Saving an .lslm header: re-run processing on all .lslp files.
             val lslpFiles = FilenameIndex.getAllFilesByExt(project, "lslp", scope)
             for (lslpFile in lslpFiles) {
-                processLslpFile(lslpFile, project)
+                processLslpFile(lslpFile)
             }
         }
 
@@ -670,8 +674,8 @@ class LslPreprocessorEngine(private val project: Project) {
         }
     }
 
-    fun preprocessFile(file: PsiFile, initialDefinitions: Map<String, String> = emptyMap()): String {
-        if (file.project.isDisposed || !file.isValid) return ""
+    fun preprocessFile(file: PsiFile, project: Project, initialDefinitions: Map<String, String> = emptyMap()): String {
+        if (project.isDisposed || !file.isValid) return ""
 
         // 1. Expand includes and directives into text
         val definitions = initialDefinitions.toMutableMap()
@@ -679,7 +683,6 @@ class LslPreprocessorEngine(private val project: Project) {
         val includeCounter = AtomicInteger(0)
         val expandedCode = expandDirectives(
             file = file,
-            project = file.project,
             definitions = definitions,
             visitedFiles = visitedFiles,
             depth = 0,
@@ -688,18 +691,18 @@ class LslPreprocessorEngine(private val project: Project) {
         )
 
         // 2. Perform function inlining
-        val inliningResult = performInlining(expandedCode, file.project)
+        val inliningResult = performInlining(expandedCode)
         val inlinedCode = inliningResult.transformedCode
         val inlinedGlobals = inliningResult.inlinedGlobals
         val inlinedFunctions = inliningResult.inlinedFunctions
 
         // 3. Construct initial PSI Tree
-        val psiFile = LslElementFactory.createFile(file.project, inlinedCode)
+        val psiFile = LslElementFactory.createFile(project, inlinedCode)
 
         // 4. In-Place PSI Constant Optimization
         val isConstantsOptimized = LslSettings.instance.optimizeConstants
         val usedConstantNames = if (isConstantsOptimized) {
-            applyConstantsOptimization(psiFile, file.project)
+            applyConstantsOptimization(psiFile)
         } else {
             emptySet()
         }
@@ -826,49 +829,14 @@ class LslPreprocessorEngine(private val project: Project) {
             return "$fileName $timeString"
         }
 
-        fun shortenPath(project: Project, path: String): String {
-            val base = project.basePath ?: return path
-
-            // Normalize separators for cross-platform safety
-            val normalizedBase = base.replace('\\', '/')
-            val normalizedPath = path.replace('\\', '/')
-
-            return if (normalizedPath.startsWith(normalizedBase)) {
-                val relative = normalizedPath.removePrefix(normalizedBase).trimStart('/')
-                "./$relative"
-            } else {
-                normalizedPath
-            }
-        }
-
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
-        val kwdbSourceInfo = KwdbData.getInstance(file.project).kwdbSourceInfo
-        val rootManager = ProjectRootManager.getInstance(project)
-        val contentRoots = rootManager.contentRoots.toList()
-        val sourceRoots = rootManager.contentSourceRoots.toList()
-        val allRoots = (contentRoots + sourceRoots).distinct()
 
-        sb.append("// ---------------------------------------------------------------\n")
-        sb.append("//  Generated by 'Linden Script (LSL)' Preprocessor\n")
-        sb.append("// ---------------------------------------------------------------\n")
-        sb.append("//  Source file            : $mainFileName\n")
-        sb.append("//  Generation time        : $timestamp\n")
-        sb.append("//  Constants optimization : ${if (isConstantsOptimized) "ON" else "OFF [debug]"} \n")
-        sb.append("//  Project                : ${project.name}\n")
-        if (allRoots.isNotEmpty()) {
-            // First root on the same line
-            sb.append("//  Content roots          : \\${shortenPath(project, allRoots[0].name)}\n")
-            // Remaining roots aligned below
-            for (i in 1 until allRoots.size) {
-                sb.append("//                           \\${shortenPath(project, allRoots[i].name)}\n")
-            }
-        } else {
-            sb.append("//  Content roots          : (none)\n")
-        }
-        sb.append("// ---------------------------------------------------------------\n")
-        sb.append("//  LSL plugin version     : ${getPluginZip()}\n")
-        sb.append("//  Keyword database       : $kwdbSourceInfo\n")
-        sb.append("// ---------------------------------------------------------------\n\n")
+        sb.append("// Source: $mainFileName\n")
+        sb.append("// Generated by IntelliJ LSL Preprocessor on $timestamp\n")
+        sb.append("// Constants Optimization: ${if (isConstantsOptimized) "ON" else "OFF"} (Recommended: ON for release, OFF for debug)\n")
+        sb.append("// Plugin: ${getPluginZip()}\n")
+        val kwdbSourceInfo = KwdbData.getInstance(project).kwdbSourceInfo
+        sb.append("// KWDB: $kwdbSourceInfo\n")
 
         emitSection(rootSection, isRoot = true, sb = sb, usedConstantNames = usedConstantNames)
 
@@ -880,7 +848,6 @@ class LslPreprocessorEngine(private val project: Project) {
 
     fun expandDirectives(
         file: PsiFile?,
-        project: Project,
         definitions: MutableMap<String, String> = mutableMapOf(),
         visitedFiles: Set<String> = emptySet(),
         depth: Int = 0,
@@ -910,14 +877,13 @@ class LslPreprocessorEngine(private val project: Project) {
 
                     val code = expandDirectives(
                         includedPsi,
-                        ctx.project,
                         ctx.definitions,
                         ctx.visitedFiles,
                         ctx.depth + 1,
                         ctx.markIncludes,
                         ctx.includeCounter
                     )
-                    //DEBUG("expandDirectives include '${includedPsi.name}' -> length=${code.length}")
+                    DEBUG("expandDirectives include '${includedPsi.name}' -> length=${code.length}")
 
                     if (ctx.markIncludes) {
                         val id = ctx.includeCounter.incrementAndGet()
@@ -925,7 +891,6 @@ class LslPreprocessorEngine(private val project: Project) {
                         result.append("// __LSL_INC_START__:$id:$incName\n")
                         val code = expandDirectives(
                             includedPsi,
-                            ctx.project,
                             ctx.definitions,
                             ctx.visitedFiles,
                             ctx.depth + 1,
@@ -937,7 +902,6 @@ class LslPreprocessorEngine(private val project: Project) {
                     } else {
                         val code = expandDirectives(
                             includedPsi,
-                            ctx.project,
                             ctx.definitions,
                             ctx.visitedFiles,
                             ctx.depth + 1,
@@ -957,15 +921,14 @@ class LslPreprocessorEngine(private val project: Project) {
 
     fun computeDisabledRanges(file: PsiFile?): List<TextRange> {
         if (file == null || !file.isValid) return emptyList()
-        if (file.project.isDisposed) return emptyList()
+        if (project.isDisposed) return emptyList()
 
-        val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return emptyList()
+        val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return emptyList()
         val rawDisabledRanges = mutableListOf<TextRange>()
 
         walkPreprocessorDirectives(
             PreprocessorContext(
                 file = file,
-                project = file.project,
                 onInactiveLine = { lineNumber ->
                     val lineIndex = lineNumber - 1
                     if (lineIndex in 0 until document.lineCount) {
@@ -977,7 +940,7 @@ class LslPreprocessorEngine(private val project: Project) {
                     }
                 },
                 onIncludeResolved = { includedPsi, ctx ->
-                    collectDefinitionsFromInclude(includedPsi, includedPsi.project, ctx.definitions, ctx.visitedFiles, 0)
+                    collectDefinitionsFromInclude(includedPsi, ctx.definitions, ctx.visitedFiles, 0)
                 }
             )
         )
@@ -988,14 +951,15 @@ class LslPreprocessorEngine(private val project: Project) {
     fun annotateIncludes(file: PsiFile?, holder: AnnotationHolder) {
         if (file == null || !file.isValid) return
         // Here we use the file's project
-        if (file.project.isDisposed) return
+        val project = file.project
 
-        val document = PsiDocumentManager.getInstance(file.project).getDocument(file)
+        if (project.isDisposed) return
+
+        val document = PsiDocumentManager.getInstance(project).getDocument(file)
 
         walkPreprocessorDirectives(
             PreprocessorContext(
                 file = file,
-                project = file.project,
                 onIncludeFailed = { includedPath, lineNumber ->
                     val lineIndex = lineNumber - 1
                     val range = if (document != null && lineIndex in 0 until document.lineCount) {
@@ -1018,7 +982,7 @@ class LslPreprocessorEngine(private val project: Project) {
                         .range(includedPsi)
                         .create()
 
-                    collectIncludedFiles(includedPsi, file.project, ctx.visitedFiles, ctx.depth + 1)
+                    collectIncludedFiles(includedPsi, ctx.visitedFiles, ctx.depth + 1)
                 }
             )
         )
@@ -1026,7 +990,6 @@ class LslPreprocessorEngine(private val project: Project) {
 
     fun collectIncludedFiles(
         file: PsiFile?,
-        project: Project,
         visitedFiles: Set<String> = emptySet(),
         depth: Int = 0
     ): Set<PsiFile> {
@@ -1037,15 +1000,14 @@ class LslPreprocessorEngine(private val project: Project) {
         walkPreprocessorDirectives(
             PreprocessorContext(
                 file = file,
-                project = project,
                 visitedFiles = visitedFiles,
                 depth = depth,
                 onIncludeResolved = { includedPsi, ctx ->
                     if (result.add(includedPsi)) {
                         val childIncludes =
-                            collectIncludedFiles(includedPsi, project, ctx.visitedFiles, ctx.depth + 1)
+                            collectIncludedFiles(includedPsi, ctx.visitedFiles, ctx.depth + 1)
                         result.addAll(childIncludes)
-                        //DEBUG("Collected file: ${includedPsi.name}")
+                        DEBUG("Collected file: ${includedPsi.name}")
                     }
                 }
             )
@@ -1056,7 +1018,6 @@ class LslPreprocessorEngine(private val project: Project) {
 
     fun collectDefinitionsFromInclude(
         file: PsiFile?,
-        project: Project,
         definitions: MutableMap<String, String>,
         visitedFiles: Set<String> = emptySet(),
         depth: Int = 0
@@ -1066,14 +1027,12 @@ class LslPreprocessorEngine(private val project: Project) {
         walkPreprocessorDirectives(
             PreprocessorContext(
                 file = file,
-                project = project,
                 definitions = definitions,
                 visitedFiles = visitedFiles,
                 depth = depth,
                 onIncludeResolved = { includedPsi, ctx ->
                     collectDefinitionsFromInclude(
                         includedPsi,
-                        ctx.project,
                         ctx.definitions,
                         ctx.visitedFiles,
                         ctx.depth + 1
@@ -1083,7 +1042,7 @@ class LslPreprocessorEngine(private val project: Project) {
         )
     }
 
-    fun eliminateDeadCode( project: Project, code: String): String {
+    fun eliminateDeadCode(code: String): String {
         val trimmedCode = code.trim()
         if (trimmedCode.isEmpty() || project.isDisposed) return ""
         val psiFile = runCatching { LslElementFactory.createFile(project, code) }.getOrNull() ?: return code
@@ -1725,7 +1684,7 @@ class LslPreprocessorEngine(private val project: Project) {
         return resolved
     }
 
-    private fun applyConstantsOptimization(psiFile: PsiFile, project: Project): Set<String> {
+    private fun applyConstantsOptimization(psiFile: PsiFile): Set<String> {
         if (project.isDisposed || !psiFile.isValid) return emptySet()
 
         val resolvedConstants = identifyConstantVariables(psiFile)
@@ -1772,7 +1731,7 @@ class LslPreprocessorEngine(private val project: Project) {
         return usedConstantNames
     }
 
-    fun performInlining(code: String, project: Project): InliningResult {
+    fun performInlining(code: String): InliningResult {
         if (project.isDisposed || code.isBlank()) {
             return InliningResult(code, emptySet(), emptySet())
         }

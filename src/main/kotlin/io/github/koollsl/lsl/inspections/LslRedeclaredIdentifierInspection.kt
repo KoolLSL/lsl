@@ -1,6 +1,7 @@
 package io.github.koollsl.lsl.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -16,33 +17,44 @@ class LslRedeclaredIdentifierInspection : LocalInspectionTool() {
     override fun getGroupDisplayName(): String = LslLanguage.INSTANCE.displayName
     override fun isEnabledByDefault(): Boolean = true
 
-    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
+    override fun checkFile(
+        file: PsiFile,
+        manager: InspectionManager,
+        isOnTheFly: Boolean
+    ): Array<ProblemDescriptor> {
+
+        val engine = file.project.service<LslPreprocessorEngine>()
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
 
         PsiTreeUtil.collectElementsOfType(file, LslNamedElement::class.java)
-            .filter { !it.textRange.isEmpty && !LslPreprocessorEngine.isElementDisabled(it) }
-            .forEach {
-                val name = it.name ?: return@forEach
-                val existingIdentifier = LslReferenceUtils.findNamedElement(it, name) ?: return@forEach
+            .filter { !it.textRange.isEmpty && !engine.isElementDisabled(it) }
+            .forEach { element ->
+                val name = element.name ?: return@forEach
+                val existingIdentifier = LslReferenceUtils.findNamedElement(element, name)
+                    ?: return@forEach
 
-                if (existingIdentifier == it || LslPreprocessorEngine.isElementDisabled(existingIdentifier)) {
+                if (existingIdentifier == element ||
+                    engine.isElementDisabled(existingIdentifier)
+                ) {
                     return@forEach
                 }
 
                 problemsHolder.registerProblem(
-                    it,
+                    element,
                     "Redeclared identifier",
-                    if (existingIdentifier.parent == it.parent)
+                    if (existingIdentifier.parent == element.parent)
                         ProblemHighlightType.GENERIC_ERROR
                     else
                         ProblemHighlightType.WARNING,
-                    it.identifyingElement?.textRangeInParent,
+                    element.identifyingElement?.textRangeInParent,
                     NavigateToElementFix(existingIdentifier),
                 )
             }
 
         return problemsHolder.resultsArray
     }
+
+
 
     class NavigateToElementFix(element: PsiElement) : LocalQuickFixOnPsiElement(element) {
         override fun startInWriteAction(): Boolean = false

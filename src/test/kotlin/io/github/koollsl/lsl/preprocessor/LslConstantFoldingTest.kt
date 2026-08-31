@@ -198,7 +198,7 @@ default {
             """.trimIndent()
         )
 
-        val resultFile = LslPreprocessorEngine.processLslpFile(mainFile.virtualFile, project)
+        val resultFile = LslPreprocessorEngine.processLslpFile(mainFile.virtualFile, mainFile.project)
         assertNotNull(resultFile)
 
         val outputText = String(resultFile!!.contentsToByteArray())
