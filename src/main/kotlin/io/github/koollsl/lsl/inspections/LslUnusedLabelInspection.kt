@@ -1,36 +1,54 @@
 package io.github.koollsl.lsl.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parents
 import io.github.koollsl.lsl.LslLanguage
+import io.github.koollsl.lsl.preprocessor.LslPreprocessorEngine
+import io.github.koollsl.lsl.psi.LslElementVisitor
+import io.github.koollsl.lsl.psi.LslEvent
+import io.github.koollsl.lsl.psi.LslFunction
 import io.github.koollsl.lsl.psi.LslStatementLabel
 
 class LslUnusedLabelInspection : LocalInspectionTool() {
     override fun getDisplayName(): String = "Unused label"
     override fun getGroupDisplayName(): String = LslLanguage.INSTANCE.displayName
     override fun isEnabledByDefault(): Boolean = true
+    override fun getStaticDescription(): String = getDisplayName()
 
-    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
-        val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+        val file = holder.file
+        val preprocessorEngine = file.project.service<LslPreprocessorEngine>()
 
-        PsiTreeUtil.collectElementsOfType(file, LslStatementLabel::class.java)
-            .filter { ReferencesSearch.search(it).none() }
-            .filter { !it.textRange.isEmpty }
-            .forEach {
-                problemsHolder.registerProblem(
-                    it,
-                    "Unused label",
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                    it.identifyingElement?.textRangeInParent,
-                    RemoveUnusedLabelFix(it)
-                )
+        return object : LslElementVisitor() {
+
+            override fun visitElement(element: PsiElement) {
+                if (element !is LslStatementLabel) return
+                if (element.textRange.isEmpty) return
+                if (preprocessorEngine.isDisabledText(file, element.textRange)) return
+
+                // Scope label searches to the containing function or event body
+                val parentScope = element.parents(false)
+                    .firstOrNull { it is LslFunction || it is LslEvent } ?: file
+                val searchScope = LocalSearchScope(parentScope)
+
+                if (ReferencesSearch.search(element, searchScope).findFirst() == null) {
+                    holder.registerProblem(
+                        element,
+                        "Unused label",
+                        ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                        element.identifyingElement?.textRangeInParent,
+                        RemoveUnusedLabelFix(element)
+                    )
+                }
             }
-
-        return problemsHolder.resultsArray
+        }
     }
 
     class RemoveUnusedLabelFix(label: LslStatementLabel) : LocalQuickFixOnPsiElement(label) {

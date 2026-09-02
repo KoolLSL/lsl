@@ -12,6 +12,7 @@ import io.github.koollsl.lsl.psi.LslStatementState
 class LslReferenceContributor : PsiReferenceContributor() {
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
         registrar.registerReferenceProvider(
+            //PlatformPatterns.psiElement(LslExpressionFunctionCall::class.java),
             PlatformPatterns.psiElement(LslTypes.EXPRESSION_FUNCTION_CALL),
             object : PsiReferenceProvider() {
                 override fun getReferencesByElement(

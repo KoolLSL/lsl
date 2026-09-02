@@ -81,7 +81,6 @@ class LslPreprocessorEngine(private val project: Project) {
         if (ctx.depth > MAX_INCLUDE_DEPTH || !file.isValid || project.isDisposed) return
         val text = file.text
 
-
         val currentIdentifiers = mutableSetOf<String>().apply {
             file.virtualFile?.path?.let { add(it) }
             file.virtualFile?.canonicalPath?.let { add(it) }
@@ -192,6 +191,7 @@ class LslPreprocessorEngine(private val project: Project) {
     }
 
     fun isElementDisabled(element: PsiElement?): Boolean {
+
         if (element == null) return false
         val file = runCatching { element.containingFile }.getOrNull() ?: return false
         if (element is PsiFile) return false
@@ -212,6 +212,21 @@ class LslPreprocessorEngine(private val project: Project) {
 
     fun getDisabledRanges(file: PsiFile?): List<TextRange> {
         if (file == null || !file.isValid) return emptyList()
+
+        // Fast-path text check: if the file contains no preprocessor directives, return early
+        val text = file.text
+        if (!text.contains("#if")) return emptyList()
+
+        return CachedValuesManager.getCachedValue(file) {
+            val ranges = runCatching { computeDisabledRanges(file) }.getOrDefault(emptyList())
+            CachedValueProvider.Result.create(
+                ranges,
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        }
+    }
+    fun OLD_getDisabledRanges(file: PsiFile?): List<TextRange> {
+        if (file == null || !file.isValid) return emptyList()
         return try {
             CachedValuesManager.getCachedValue(file) {
                 val ranges = runCatching { computeDisabledRanges(file) }.getOrDefault(emptyList())
@@ -220,6 +235,16 @@ class LslPreprocessorEngine(private val project: Project) {
         } catch (_: Exception) {
             runCatching { computeDisabledRanges(file) }.getOrDefault(emptyList())
         }
+    }
+    /**
+     * Checks if a specific TextRange is fully contained within any disabled preprocessor range in the file.
+     * Efficiently uses the cached getDisabledRanges list.
+     */
+    fun isDisabledText(file: PsiFile?, range: TextRange): Boolean {
+        if (file == null || range.isEmpty) return false
+        val disabledRanges = getDisabledRanges(file)
+        if (disabledRanges.isEmpty()) return false
+        return disabledRanges.any { disabled -> disabled.contains(range) }
     }
 
     fun evaluateCondition(expression: String, definitions: Map<String, String>): Boolean {
@@ -375,6 +400,8 @@ class LslPreprocessorEngine(private val project: Project) {
         val fileNameWithoutExtension = virtualFile.nameWithoutExtension
         val outputFileName = "$fileNameWithoutExtension.lsl"
         val isLocal = virtualFile.fileSystem is LocalFileSystem && !ApplicationManager.getApplication().isUnitTestMode
+
+        //println("outputFileName: " + outputFileName.toString()) // DEBUG
 
         if (isLocal) {
             runCatching {
@@ -1009,15 +1036,6 @@ class LslPreprocessorEngine(private val project: Project) {
                         .create()
                 },
                 onIncludeResolved = { includedPsi, ctx ->
-                    val hasContent = includedPsi.textLength > 0
-                    val status = if (hasContent) "valid" else "EMPTY"
-                    holder.newAnnotation(
-                        HighlightSeverity.WEAK_WARNING,
-                        "Include resolved: '${includedPsi.name}' ($status, ${includedPsi.textLength} chars), project: ${includedPsi.project.name}"
-                    )
-                        .range(includedPsi)
-                        .create()
-
                     collectIncludedFiles(includedPsi, file.project, ctx.visitedFiles, ctx.depth + 1)
                 }
             )

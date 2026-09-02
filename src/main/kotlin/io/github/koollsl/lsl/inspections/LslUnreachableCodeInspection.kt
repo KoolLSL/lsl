@@ -1,45 +1,53 @@
 package io.github.koollsl.lsl.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import io.github.koollsl.lsl.LslLanguage
+import io.github.koollsl.lsl.preprocessor.LslPreprocessorEngine
 import io.github.koollsl.lsl.psi.*
+
+private val FINAL_FUNCTIONS = setOf("llDie", "llResetScript")
 
 class LslUnreachableCodeInspection : LocalInspectionTool() {
     override fun getDisplayName(): String = "Unreachable code"
     override fun getGroupDisplayName(): String = LslLanguage.INSTANCE.displayName
     override fun isEnabledByDefault(): Boolean = true
+    override fun getStaticDescription(): String = getDisplayName()
 
-    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
-        val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+        val file = holder.file
+        val preprocessorEngine = file.project.service<LslPreprocessorEngine>()
 
-        PsiTreeUtil.collectElementsOfType(file, LslStatementBlock::class.java)
-            .filter { !it.textRange.isEmpty }
-            .forEach { block ->
-                val unreachableCodeRanges = findUnreachableCodeRanges(block)
+        return object : LslElementVisitor() {
 
-                unreachableCodeRanges.forEach {
-                    problemsHolder.registerProblem(
-                        block,
+            override fun visitElement(element: PsiElement) {
+                if (element !is LslStatementBlock) return
+                if (preprocessorEngine.isDisabledText(file, element.textRange)) return
+
+                val unreachableCodeRanges = findUnreachableCodeRanges(element)
+
+                unreachableCodeRanges.forEach { range ->
+                    val first = range.first()
+                    val last = range.last()
+
+                    holder.registerProblem(
+                        element,
                         "Unreachable code",
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                        TextRange(it.first().startOffsetInParent, it.last().textRangeInParent.endOffset),
-                        RemoveUnreachableCodeFix(
-                            it.first(),
-                            it.last()
-                        )
+                        TextRange(first.startOffsetInParent, last.textRangeInParent.endOffset),
+                        RemoveUnreachableCodeFix(first, last)
                     )
                 }
             }
-
-        return problemsHolder.resultsArray
+        }
     }
 
     private fun findUnreachableCodeRanges(block: LslStatementBlock): List<Array<PsiElement>> {
@@ -47,20 +55,13 @@ class LslUnreachableCodeInspection : LocalInspectionTool() {
         val currentUnreachableBlock = ArrayList<PsiElement>()
         val result = ArrayList<Array<PsiElement>>()
 
-        val searchScope = LocalSearchScope(
-            block.parents(false).filter { it is LslFunction || it is LslEvent }.first()
-        )
+        val parentScope = block.parents(false)
+            .firstOrNull { it is LslFunction || it is LslEvent } ?: return emptyList()
 
-        block.children.forEach {
-            // if code is unreachable, but it's label with existing jump, make it reachable again
-            // but this code will mark as reachable this:
-            //   return;
-            //   @someLabel; // label has jump - so...
-            //   jump someLabel;
-            //   llOwnerSay("meow");
-            // but well, it already works better than before
-            // TODO: follow all code branches and find truly unreachable ones
-            if (!isReachable && (it is LslStatementLabel) && ReferencesSearch.search(it, searchScope).findFirst() != null) {
+        val searchScope = LocalSearchScope(parentScope)
+
+        block.children.forEach { element ->
+            if (!isReachable && element is LslStatementLabel && ReferencesSearch.search(element, searchScope).findFirst() != null) {
                 isReachable = true
 
                 if (currentUnreachableBlock.isNotEmpty()) {
@@ -70,15 +71,13 @@ class LslUnreachableCodeInspection : LocalInspectionTool() {
             }
 
             if (!isReachable) {
-                currentUnreachableBlock.add(it)
+                currentUnreachableBlock.add(element)
             }
 
-            // make code unreachable if it meets return, state switch or final function call (llDie, llResetScript)
-            isReachable = isReachable && when (it) {
+            isReachable = isReachable && when (element) {
                 is LslStatementReturn -> false
                 is LslStatementState -> false
-                is LslStatementExpression -> !isFinalFunctionCall(it.children.singleOrNull() as? LslExpressionFunctionCall)
-
+                is LslStatementExpression -> !isFinalFunctionCall(element.children.singleOrNull() as? LslExpressionFunctionCall)
                 else -> true
             }
         }
@@ -93,15 +92,12 @@ class LslUnreachableCodeInspection : LocalInspectionTool() {
 
     private fun isFinalFunctionCall(functionCall: LslExpressionFunctionCall?): Boolean {
         val functionName = functionCall?.functionName ?: return false
-
-        return listOf(
-            "llDie",
-            "llResetScript"
-        ).contains(functionName)
+        return functionName in FINAL_FUNCTIONS
     }
 
     class RemoveUnreachableCodeFix(startElement: PsiElement, endElement: PsiElement) :
         LocalQuickFixOnPsiElement(startElement, endElement) {
+
         override fun getFamilyName(): String = "Remove unreachable code"
 
         override fun getText(): String = familyName

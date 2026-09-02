@@ -112,5 +112,10 @@ enum class LslPrimitiveType {
         return INVALID
     }
 
-    override fun toString(): String = name.lowercase()
+    override fun toString(): String = when (this) {
+        // quaternion is a keyword supported by the LSL compiler that means the same thing as,
+        // and is interchangeable with, rotation.
+        QUATERNION -> "rotation"
+        else -> name.lowercase()
+    }
 }

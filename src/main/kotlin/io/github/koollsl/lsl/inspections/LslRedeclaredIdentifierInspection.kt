@@ -5,10 +5,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import io.github.koollsl.lsl.LslLanguage
 import io.github.koollsl.lsl.preprocessor.LslPreprocessorEngine
+import io.github.koollsl.lsl.psi.LslElementVisitor
 import io.github.koollsl.lsl.psi.LslNamedElement
 import io.github.koollsl.lsl.references.LslReferenceUtils
 
@@ -16,45 +17,42 @@ class LslRedeclaredIdentifierInspection : LocalInspectionTool() {
     override fun getDisplayName(): String = "Redeclared identifier"
     override fun getGroupDisplayName(): String = LslLanguage.INSTANCE.displayName
     override fun isEnabledByDefault(): Boolean = true
+    override fun getStaticDescription(): String = getDisplayName()
 
-    override fun checkFile(
-        file: PsiFile,
-        manager: InspectionManager,
-        isOnTheFly: Boolean
-    ): Array<ProblemDescriptor> {
-
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+        val file = holder.file
         val engine = file.project.service<LslPreprocessorEngine>()
-        val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
 
-        PsiTreeUtil.collectElementsOfType(file, LslNamedElement::class.java)
-            .filter { !it.textRange.isEmpty && !engine.isElementDisabled(it) }
-            .forEach { element ->
-                val name = element.name ?: return@forEach
-                val existingIdentifier = LslReferenceUtils.findNamedElement(element, name)
-                    ?: return@forEach
+        return object : LslElementVisitor() {
 
-                if (existingIdentifier == element ||
-                    engine.isElementDisabled(existingIdentifier)
-                ) {
-                    return@forEach
+            override fun visitElement(element: PsiElement) {
+                if (element !is LslNamedElement) return
+                if (element.textRange.isEmpty) return
+                if (engine.isElementDisabled(element)) return
+
+                val name = element.name ?: return
+                val existingIdentifier = LslReferenceUtils.findNamedElement(element, name) ?: return
+
+                if (existingIdentifier == element || engine.isElementDisabled(existingIdentifier)) {
+                    return
                 }
 
-                problemsHolder.registerProblem(
+                val highlightType = if (existingIdentifier.parent == element.parent) {
+                    ProblemHighlightType.GENERIC_ERROR
+                } else {
+                    ProblemHighlightType.WARNING
+                }
+
+                holder.registerProblem(
                     element,
                     "Redeclared identifier",
-                    if (existingIdentifier.parent == element.parent)
-                        ProblemHighlightType.GENERIC_ERROR
-                    else
-                        ProblemHighlightType.WARNING,
+                    highlightType,
                     element.identifyingElement?.textRangeInParent,
-                    NavigateToElementFix(existingIdentifier),
+                    NavigateToElementFix(existingIdentifier)
                 )
             }
-
-        return problemsHolder.resultsArray
+        }
     }
-
-
 
     class NavigateToElementFix(element: PsiElement) : LocalQuickFixOnPsiElement(element) {
         override fun startInWriteAction(): Boolean = false

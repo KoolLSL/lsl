@@ -1,30 +1,30 @@
 <idea-plugin>
     <id>io.github.koollsl.lsl</id>
-    <name>LSL (Linden Scripting Language) Development Kit</name>
+    <name>LSL (Linden Scripting Language)</name>
     <version>0.2.4</version>
 
     <vendor url="https://github.com/KoolLSL">KoolLSL</vendor>
 
     <description><![CDATA[
       Linden Script (LSL) language plugin.<br />
-      See <a
-            href="https://wiki.secondlife.com/wiki/LSL_Portal">official LSL documentation</a>.<br />
-      Uses <a
-            href="https://github.com/Sei-Lisa/kwdb">kwdb</a> database.<br />
+      See <a href="https://wiki.secondlife.com/wiki/LSL_Portal">official LSL documentation</a>.<br />
+      Uses <a href="https://github.com/Sei-Lisa/kwdb">kwdb</a> database.<br />
       <br />
-      Second Life (SL) and Second Life Eye-in-Hand Logo are registered trademarks of Linden Labs.<br />
-      The plugin is third-party and does not support by Linden Labs.<br />
+      Second Life (SL) and Second Life Eye-in-Hand Logo are registered trademarks of Linden Lab.<br />
+      The plugin is third-party and is not supported by Linden Lab.<br />
       <br />
       <b>WARNING:</b> the plugin is in early access and may contain problems.
       <br />
-      Please report about issues to <a
-            href="https://github.com/koollsl/lsl/issues">GitHub</a>
+      Please report about issues on <a href="https://github.com/koollsl/lsl/issues">GitHub</a>
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
 
-    <extensions
-            defaultExtensionNs="com.intellij">
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Project Services -->
+        <projectService serviceImplementation="io.github.koollsl.lsl.preprocessor.LslPreprocessorEngine"/>
+
+        <!-- Language Definitions & Syntax -->
         <fileType
                 name="LSL file"
                 implementationClass="io.github.koollsl.lsl.LslFileType"
@@ -61,7 +61,7 @@
         <completion.contributor
                 language="LSL"
                 implementationClass="io.github.koollsl.lsl.completion.LslCompletionContributor"/>
-        
+
         <langCodeStyleSettingsProvider
                 implementation="io.github.koollsl.lsl.formatting.LslLanguageCodeStyleSettingsProvider" />
 
@@ -112,12 +112,157 @@
                 id="io.github.koollsl.lsl.settings.LslSettingsConfigurable"
                 displayName="LSL"/>
 
-        <!-- inspections -->
-
         <internalFileTemplate
                 name="Linden Script"/>
-|
+
+        <!-- inspections -->
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUnusedFunction"
+                displayName="Unused function"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedFunctionInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUnusedVariable"
+                displayName="Unused variable"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedVariableInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUnusedArgument"
+                displayName="Unused argument"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedArgumentInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUnusedState"
+                displayName="Unused state"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedStateInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUnusedLabel"
+                displayName="Unused label"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnusedLabelInspection"/>
+
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUndeclaredFunction"
+                displayName="Undeclared function"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredFunctionInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUndeclaredVariable"
+                displayName="Undeclared variable"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredVariableInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUndeclaredState"
+                displayName="Undeclared state"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredStateInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUndeclaredLabel"
+                displayName="Undeclared label"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUndeclaredLabelInspection"/>
+
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslReservedIdentifier"
+                displayName="Reserved identifier"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslReservedIdentifierInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslRedeclaredIdentifier"
+                displayName="Redeclared identifier"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslRedeclaredIdentifierInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslInvalidVectorOrQuaternionItem"
+                displayName="Invalid vector or quaternion item"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidVectorOrQuaternionItemInspection"/>
+         <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslEmptyStateBody"
+                displayName="Empty state"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslEmptyStateBodyInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslUnreachableCode"
+                displayName="Unreachable code"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslUnreachableCodeInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslRedundantTypeCast"
+                displayName="Redundant type cast"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslRedundantTypeCastInspection"/>
+
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslInvalidAssignmentType"
+                displayName="Invalid assignment type"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidAssignmentTypeInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslInvalidReturnType"
+                displayName="Invalid return type"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidReturnTypeInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslInvalidExpressionType"
+                displayName="Invalid expression type"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidExpressionTypeInspection"/>
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslInvalidFunctionCallArgument"
+                displayName="Invalid function call argument"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidFunctionCallArgumentInspection"/>
+
+        <localInspection
+                language="LSL"
+                groupName="LSL"
+                shortName="LslInvalidEventDeclaration"
+                displayName="Invalid event declaration"
+                enabledByDefault="true"
+                implementationClass="io.github.koollsl.lsl.inspections.LslInvalidEventDeclarationInspection"/>
+
     </extensions>
+
     <actions>
         <action
                 id="LSL.NewLindenScriptFile"
